@@ -1,0 +1,1132 @@
+starters:
+  1:
+    subject: "Dohodnutie termínu školenia"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      radi by sme zorganizovali interné školenie pre náš tím na tému optimalizácie procesov.
+      Chcel by som sa ťa opýtať, kedy by ti vyhovoval termín. Máme navrhnuté dva možné dni – budúci utorok alebo štvrtok popoludní.
+      Ktorý z týchto dní by bol pre teba lepší? Ak žiaden nevyhovuje, navrhni, prosím, iný termín.
+
+      Ďakujem a prajem pekný deň,
+      {{sender_name}}
+    responses: [11]
+
+  2:
+    subject: "Kontrola nového marketingového materiálu"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Máme nový návrh marketingových letákov a chcel by som ťa poprosiť o rýchlu kontrolu, či všetko sedí a či by si odporučil/a nejaké úpravy.
+      Nájdeš si pár minút tento týždeň na spätnú väzbu?
+
+      Vopred ďakujem,
+      {{sender_name}}
+    responses: [21]
+
+  3:
+    subject: "Návrh na zlepšenie firemnej webstránky"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Dostal som niekoľko podnetov na vylepšenie našej firemnej webstránky – hlavne z hľadiska navigácie a dizajnu.
+      Mohli by sme si sadnúť a prebrať, ako to posunúť na vyššiu úroveň?
+      Navrhujem stretnutie koncom týždňa. Kedy by sa ti to hodilo?
+
+      Ďakujem a želám pekný deň,
+      {{sender_name}}
+    responses: [31]
+
+  4:
+    subject: "Koordinácia firemného výletu"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Plánujeme tímový výlet a chcel by som doladiť detaily. Máš nejaké preferencie ohľadom miesta, aktivít alebo termínov?
+      Budem rád, ak mi čím skôr dáš vedieť, aby sme to mohli včas zorganizovať.
+
+      Ďakujem a teším sa na spoluprácu,
+      {{sender_name}}
+    responses: [41]
+
+  5:
+    subject: "Dopyt na detaily ohľadom IT bezpečnosti"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Pripravujeme sa na audit IT bezpečnosti a potreboval by som tvoje odborné názory.
+      Mohol/a by si mi poslať zoznam kontrol a postupov, ktoré už máme zavedené, aby sme to vedeli porovnať s požiadavkami audítorov?
+
+      Vďaka a pekný deň,
+      {{sender_name}}
+    responses: [51]
+
+  6:
+    subject: "Kontrola rozpočtu na Q2"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Rád by som s tebou prešiel rozpočet na druhý kvartál, aby sme si boli istí, že nevynechávame žiadne dôležité položky.
+      Kedy by si mal/a chvíľu, aby sme to spolu skontrolovali?
+
+      Ďakujem,
+      {{sender_name}}
+    responses: [61]
+
+  7:
+    subject: "Overenie aktualizácie CRM systému"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Počul som, že čoskoro aktualizujeme náš CRM systém na novú verziu.
+      Mohol/a by si mi potvrdiť, kedy presne sa to udeje a či bude potrebný nejaký downtime?
+      Tiež by ma zaujímalo, či sa zmení rozhranie alebo funkcie, na ktoré si máme dať pozor.
+
+      Vďaka za info,
+      {{sender_name}}
+    responses: [71]
+
+  8:
+    subject: "Diskusia o nových HR politikách"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Počul som, že HR pripravuje nové politiky k práci z domu a flexibilnému pracovnému času.
+      Rád by som ťa poprosil o tvoj názor na to. Mohli by sme sa stretnúť a prebrať, aký dopad to môže mať na náš tím?
+
+      Ďakujem za ochotu,
+      {{sender_name}}
+    responses: [81]
+
+  9:
+    subject: "Plánovanie sezónnej kampane"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Blíži sa sezóna a chceli by sme naplánovať novú marketingovú kampaň.
+      Máš nejaké návrhy na komunikačné kanály alebo kreatívne nápady, ako zaujať našich zákazníkov?
+      Budem rád, ak mi pošleš svoje tipy.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [91]
+
+  10:
+    subject: "Zmena v dodávateľskom reťazci"
+    recipients: ["{{receiver_email}}"]
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Plánuje sa zmena v našom dodávateľskom reťazci a chcel by som s tebou prebrať, aký to bude mať dopad na naše projekty.
+      Vieš si nájsť čas tento alebo budúci týždeň, aby sme to prediskutovali?
+
+      Ďakujem,
+      {{sender_name}}
+    responses: [101]
+
+
+responses:
+  # Starter 1 responses (11–19)
+  11:
+    subject: "RE 11: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Utorok popoludní by mi vyhovoval viac. Môžem si to rezervovať.
+      Keby si mal/a nejaké materiály dopredu, pošli mi ich, prosím.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [12]
+  12:
+    subject: "RE 12: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Super, utorok platí. Pošlem ti materiály ešte dnes.
+      Teším sa na stretnutie.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [13]
+  13:
+    subject: "RE 13: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Materiály som si prezrel/a. Mám zopár otázok k praktickým príkladom.
+      Mohli by sme ich na stretnutí prebrať?
+
+      Ďakujem,
+      {{receiver_name}}
+    responses: [14]
+  14:
+    subject: "RE 14: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Určite, môžeme prebrať všetko, čo ťa zaujíma, vrátane praktických príkladov.
+      Je niečo konkrétne, čo ťa najviac zaujalo?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [15]
+  15:
+    subject: "RE 15: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Bol by som rád, ak by sme si mohli vyskúšať jeden z procesov aj prakticky.
+      Myslím, že by to pomohlo lepšiemu pochopeniu.
+
+      Ďakujem,
+      {{receiver_name}}
+    responses: [16]
+  16:
+    subject: "RE 16: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Dobrý nápad. Pripravím jeden praktický prípad na stretnutie.
+      Verím, že to bude užitočné.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [17]
+  17:
+    subject: "RE 17: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Skvelé, teším sa na to.
+      Vidíme sa v utorok v zasadačke B.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [18]
+  18:
+    subject: "RE 18: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Perfektné, dovidenia na stretnutí!
+      Ak sa niečo zmení, daj mi prosím vedieť.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [19]
+  19:
+    subject: "RE 19: Dohodnutie termínu školenia"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, budem informovať.
+      Pekný deň!
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 2 responses (21–29)
+  21:
+    subject: "RE 21: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, nájdem si čas dnes popoludní. Pošleš mi, prosím, náhľad?
+
+      Ďakujem,
+      {{receiver_name}}
+    responses: [22]
+  22:
+    subject: "RE 22: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Posielam ti prílohu s návrhom.
+      Zameraj sa prosím na grafiku a texty.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [23]
+  23:
+    subject: "RE 23: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Materiál vyzerá fajn, no odporúčal/a by som upraviť farebnú schému, aby bola čitateľnejšia.
+      Tiež by som skrátil/a text na druhej strane.
+
+      Čo myslíš?
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [24]
+  24:
+    subject: "RE 24: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Skvelé pripomienky. Navrhuješ nejakú konkrétnu farebnú paletu alebo to necháš na mňa?
+
+      Ďakujem,
+      {{sender_name}}
+    responses: [25]
+  25:
+    subject: "RE 25: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Možno použi svetlejší odtieň modrej na pozadie a tmavé písmo pre kontrast.
+      Verím, že to bude vyzerať lepšie.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [26]
+  26:
+    subject: "RE 26: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Super, skúsim to takto upraviť.
+      Keď budem mať novú verziu, pošlem ti ju na kontrolu.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [27]
+  27:
+    subject: "RE 27: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, pošli ju a rád/a sa opäť pozriem.
+      Teším sa, ako to bude vyzerať.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [28]
+  28:
+    subject: "RE 28: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Nová verzia je hotová, posielam v prílohe.
+      Daj prosím vedieť, čo si o nej myslíš.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [29]
+  29:
+    subject: "RE 29: Kontrola nového marketingového materiálu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Teraz to vyzerá výborne! Myslím, že materiál môžeme použiť.
+      Ďakujem za úpravy a rýchlu reakciu.
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 3 responses (31–39)
+  31:
+    subject: "RE 31: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Koniec týždňa mi vyhovuje, čo tak piatok o 10:00?
+      Môžeme si prejsť návrhy a spísať konkrétne kroky.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [32]
+  32:
+    subject: "RE 32: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Piatok 10:00 znie super. Pripravím si nejaké vlastné nápady a príklady.
+      Máš niečo konkrétne, na čo by sme sa mali zamerať?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [33]
+  33:
+    subject: "RE 33: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Chcel/a by som sa zamerať najmä na zjednodušenie navigácie a modernizáciu vzhľadu.
+      Tiež by sme mohli pridať sekciu s častými otázkami pre zákazníkov.
+
+      Čo si o tom myslíš?
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [34]
+  34:
+    subject: "RE 34: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      To znie ako dobrý plán. Pridám si to do zoznamu.
+      Ak by si mal/a nejaký konkrétny príklad modernej navigácie, pošli mi link, rád sa inšpirujem.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [35]
+  35:
+    subject: "RE 35: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Pozri napríklad stránku XYZ, majú prehľadnú hornú lištu a intuitívne rozdelenie kategórií.
+      Myslím, že podobný prístup by sa nám hodil.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [36]
+  36:
+    subject: "RE 36: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Skvelý tip, pozriem sa na to.
+      V piatok si to všetko spíšeme a dohodneme konkrétne kroky.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [37]
+  37:
+    subject: "RE 37: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Teším sa na piatkové stretnutie. Verím, že to posunie našu stránku na novú úroveň.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [38]
+  38:
+    subject: "RE 38: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Aj ja sa teším. Ak by ťa ešte niečo napadlo, napíš mi.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [39]
+  39:
+    subject: "RE 39: Návrh na zlepšenie firemnej webstránky"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, dám vedieť. Zatiaľ ďakujem.
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 4 responses (41–49)
+  41:
+    subject: "RE 41: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Páčilo by sa mi niečo vonku, napríklad turistika alebo cyklovýlet.
+      Čo myslíš?
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [42]
+  42:
+    subject: "RE 42: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Super nápad. Pozriem sa na vhodné lokality.
+      Máš radšej jednodňový výlet alebo aj s prenocovaním?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [43]
+  43:
+    subject: "RE 43: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jednodňový by bol asi lepší, nech to nie je príliš komplikované.
+      Môžeme pridať aj nejakú tímovú hru alebo aktivitu.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [44]
+  44:
+    subject: "RE 44: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Dobre, jednodňový výlet s tímovou aktivitou.
+      Skúsim nájsť nejakú lokalitu s lanovým parkom alebo krátkym teambuildingom.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [45]
+  45:
+    subject: "RE 45: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      To znie super. Potom mi daj vedieť, čo si našiel.
+      Rád/a pomôžem s organizáciou.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [46]
+  46:
+    subject: "RE 46: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Určite, keď budem mať návrhy, pošlem ti ich na konzultáciu.
+      Verím, že spoločne vyberieme niečo super.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [47]
+  47:
+    subject: "RE 47: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Už sa teším. Daj vedieť, keď budeš mať konkrétne návrhy.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [48]
+  48:
+    subject: "RE 48: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Určite, ozvem sa čoskoro.
+      Zatiaľ pekný deň.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [49]
+  49:
+    subject: "RE 49: Koordinácia firemného výletu"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Vďaka, čakám na správy.
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 5 responses (51–59)
+  51:
+    subject: "RE 51: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Mám zoznam kontrol a postupov. Pošlem ti ich v prílohe.
+      Ak niečo chýba, daj mi vedieť.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [52]
+  52:
+    subject: "RE 52: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Ďakujem za zoznam, pozriem si ho.
+      Mohli by sme sa potom krátko stretnúť a prebrať, či sú splnené požiadavky audítorov?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [53]
+  53:
+    subject: "RE 53: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, môžeme sa stretnúť napríklad zajtra poobede.
+      Pripravím si hlavné body, ktoré by sme mali prediskutovať, aby sme si boli istí, že spĺňame všetko potrebné.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [54]
+  54:
+    subject: "RE 54: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Zajtra poobede mi vyhovuje. Môžeme to zobrať postupne a pozrieť sa na každú kontrolu.
+      Budem mať pri sebe aj zoznam auditných kritérií.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [55]
+  55:
+    subject: "RE 55: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Perfektné, prejdeme si to krok za krokom.
+      Ak nájdeme nejakú medzeru, spravíme akčný plán.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [56]
+  56:
+    subject: "RE 56: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Dobre, takto to bude najefektívnejšie.
+      Po stretnutí by sme mohli spísať súhrn. Čo ty na to?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [57]
+  57:
+    subject: "RE 57: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Určite, vypracujme stručný súhrn, aby sme mali prehľad.
+      Teším sa na zajtrajšie stretnutie.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [58]
+  58:
+    subject: "RE 58: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Aj ja sa teším. Verím, že potom budeme perfektne pripravení na audit.
+      Ak by niečo prišlo, daj vedieť.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [59]
+  59:
+    subject: "RE 59: Dopyt na detaily ohľadom IT bezpečnosti"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Jasné, ak niečo príde, budem informovať.
+      Pekný deň!
+
+      S pozdravom,
+      {{sender_name}}
+
+  # Starter 6 responses (61–69)
+  61:
+    subject: "RE 61: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Mám chvíľu vo štvrtok ráno alebo piatok popoludní.
+      Ktorý termín by ti sedel viac?
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [62]
+  62:
+    subject: "RE 62: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Štvrtok ráno by bol ideálny. Prejdeme všetky položky a porovnáme ich s plánovanými nákladmi.
+      Pripravím si aj predošlé rozpočty na porovnanie.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [63]
+  63:
+    subject: "RE 63: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Super, štvrtok ráno platí. Pozriem sa dovtedy na aktuálne výdavky.
+      Chcem sa uistiť, že nám nič neunikne.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [64]
+  64:
+    subject: "RE 64: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Skvelé. Môžeme sa pozrieť aj na oblasti, kde by sme mohli ušetriť.
+      Máš nejaké tipy?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [65]
+  65:
+    subject: "RE 65: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Mám zopár nápadov na optimalizáciu nákladov. Preberieme to na stretnutí.
+      Možno niektoré projekty posunieme na neskôr.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [66]
+  66:
+    subject: "RE 66: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      To znie dobre. Teším sa na štvrtok.
+      Ďakujem za prípravu.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [67]
+  67:
+    subject: "RE 67: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Aj ja sa teším. Verím, že si potom urobíme jasno.
+      Ak sa niečo zmení, daj vedieť.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [68]
+  68:
+    subject: "RE 68: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Určite, ak niečo príde, napíšem.
+      Zatiaľ pekný deň!
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [69]
+  69:
+    subject: "RE 69: Kontrola rozpočtu na Q2"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Vďaka, aj tebe pekný deň.
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 7 responses (71–79)
+  71:
+    subject: "RE 71: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Aktualizácia je naplánovaná na budúci utorok o 22:00.
+      Systém bude nedostupný asi 2 hodiny.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [72]
+  72:
+    subject: "RE 72: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Ďakujem za info. Zmení sa aj rozhranie?
+      Budeme potrebovať nejaký návod na nové funkcie?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [73]
+  73:
+    subject: "RE 73: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Rozhranie bude podobné, len pár ikon sa presunie.
+      Pošlem ti krátky dokument s popisom zmien.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [74]
+  74:
+    subject: "RE 74: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Super, to pomôže.
+      Ak by po aktualizácii vznikli problémy, kam hlásiť?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [75]
+  75:
+    subject: "RE 75: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Hlás to prosím na IT helpdesk alebo napíš mne.
+      Budeme pripravení rýchlo reagovať.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [76]
+  76:
+    subject: "RE 76: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      V poriadku, budem to tak robiť.
+      Pošli mi prosím ten dokument so zmenami.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [77]
+  77:
+    subject: "RE 77: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Dokument pošlem zajtra.
+      Ak budeš mať otázky, napíš.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [78]
+  78:
+    subject: "RE 78: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Dobre, počkám naň a prejdem si ho.
+      Ďakujem za spoluprácu.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [79]
+  79:
+    subject: "RE 79: Overenie aktualizácie CRM systému"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Nemáš za čo. 
+      Pekný deň!
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 8 responses (81–89)
+  81:
+    subject: "RE 81: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Môžeš prísť vo štvrtok o 14:00 do mojej kancelárie?
+      Preberieme tie nové politiky a ich dopad.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [82]
+  82:
+    subject: "RE 82: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Štvrtok o 14:00 mi vyhovuje.
+      Zaujíma ma hlavne, ako to ovplyvní flexibilný čas a home office.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [83]
+  83:
+    subject: "RE 83: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, to sú kľúčové body. Pripravím si poznámky.
+      Možno budeme potrebovať aj školenie pre zamestnancov.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [84]
+  84:
+    subject: "RE 84: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Dobrý nápad. Ak budú zmeny výrazné, školenie pomôže.
+      Máš nejaké materiály, ktoré by som si mohol dopredu pozrieť?
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [85]
+  85:
+    subject: "RE 85: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Posielam ti prílohu s kľúčovými bodmi.
+      Budeme mať lepší prehľad, čo nás čaká.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [86]
+  86:
+    subject: "RE 86: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Ďakujem, prejdem si to.
+      Vidíme sa vo štvrtok.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [87]
+  87:
+    subject: "RE 87: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Teším sa na diskusiu.
+      Ak máš otázky, priprav si ich.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [88]
+  88:
+    subject: "RE 88: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Určite, budem pripravený.
+      Ak sa niečo zmení, daj vedieť.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [89]
+  89:
+    subject: "RE 89: Diskusia o nových HR politikách"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, ak niečo príde, napíšem.
+      Zatiaľ pekný deň.
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 9 responses (91–99)
+  91:
+    subject: "RE 91: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Odporúčal/a by som sociálne siete, najmä Instagram a LinkedIn.
+      Tiež môžeme skúsiť krátke video reklamy.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [92]
+  92:
+    subject: "RE 92: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Dobrý nápad s videami. Máš nejaký koncept?
+      Chceme niečo kreatívne a pútavé.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [93]
+  93:
+    subject: "RE 93: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Mohli by sme ukázať príbeh zákazníka, ako mu náš produkt pomáha.
+      Krátky klip s reálnym použitím produktu.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [94]
+  94:
+    subject: "RE 94: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Super nápad. Spojím sa s kreatívnym tímom.
+      Možno urobíme aj anketu medzi zákazníkmi pre inšpiráciu.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [95]
+  95:
+    subject: "RE 95: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Anketa je skvelý nápad. Výsledky môžeme použiť v kampani.
+      Uvidíme, čo zákazníci povedia.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [96]
+  96:
+    subject: "RE 96: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Pripravím otázky a pošlem ti ich na kontrolu.
+      Potom sa pustíme do videa.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [97]
+  97:
+    subject: "RE 97: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Pošli ich, rád/a sa pozriem.
+      Verím, že kampaň bude úspešná.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [98]
+  98:
+    subject: "RE 98: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Budem na nich pracovať dnes.
+      Ak ťa ešte niečo napadne, daj mi vedieť.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [99]
+  99:
+    subject: "RE 99: Plánovanie sezónnej kampane"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Jasné, ak niečo vymyslím, napíšem.
+      Pekný deň.
+
+      S pozdravom,
+      {{receiver_name}}
+
+  # Starter 10 responses (101–109)
+  101:
+    subject: "RE 101: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Mám voľno v pondelok o 15:00.
+      Pozrieme sa spolu na dopad tejto zmeny.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [102]
+  102:
+    subject: "RE 102: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Pondelok o 15:00 je fajn. Prinesiem informácie o novom dodávateľovi.
+      Pozrieme aj skladové zásoby.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [103]
+  103:
+    subject: "RE 103: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Super, skladové zásoby sú kľúčové.
+      Možno upravíme harmonogram dodávok a ceny.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [104]
+  104:
+    subject: "RE 104: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Pozriem sa na cenové ponuky a porovnám ich.
+      Ak zistíme rozdiely, zapracujeme ich do plánov.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [105]
+  105:
+    subject: "RE 105: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Dobre, v pondelok to všetko preberieme.
+      Mali by sme potom informovať aj obchodný tím.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [106]
+  106:
+    subject: "RE 106: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Jasné, po stretnutí vypracujeme krátky report pre obchodný tím.
+      Nech sú v obraze.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [107]
+  107:
+    subject: "RE 107: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Výborný nápad. Teším sa na pondelok.
+      Uvidíme, ako to dopadne.
+
+      S pozdravom,
+      {{receiver_name}}
+    responses: [108]
+  108:
+    subject: "RE 108: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{receiver_name}},
+
+      Aj ja som zvedavý/á. Pripravím čo najviac detailov.
+      Ak ťa ešte niečo napadne, napíš.
+
+      S pozdravom,
+      {{sender_name}}
+    responses: [109]
+  109:
+    subject: "RE 109: Zmena v dodávateľskom reťazci"
+    email_body: |
+      Ahoj {{sender_name}},
+
+      Určite, ak ma niečo napadne, ozvem sa.
+      Zatiaľ pekný deň.
+
+      S pozdravom,
+      {{receiver_name}}

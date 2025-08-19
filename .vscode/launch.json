@@ -1,0 +1,57 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: GUI Debug",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "env": {
+        "DISPLAY": ":0"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "Python: GUI Debug (Custom Display)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "env": {
+        "DISPLAY": "${input:displayValue}"
+      }
+    },
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python: Debug in RDS Console",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "C:\\user_automation"
+        }
+      ],
+      "preLaunchTask": "start-python-in-console"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "displayValue",
+      "description": "Enter DISPLAY value",
+      "default": ":0",
+      "type": "promptString"
+    }
+  ],
+}

@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "start-python-in-console",
+      "type": "shell",
+      "command": "powershell.exe -File ${workspaceFolder}/launch_in_console.ps1 ${command:python.interpreterPath} ${file}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
