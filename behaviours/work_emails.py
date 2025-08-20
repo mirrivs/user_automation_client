@@ -52,7 +52,7 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
     # Read and reply to received emails from email conversations
     for email in unread_emails:
         subject_link = None
-        if landscape_id == 2:
+        if email_client == "owa":
             subject_link = email.find_element(
                 By.XPATH, "//span[contains(@class, 'lvHighlightAllClass lvHighlightSubjectClass')]")
         else:
@@ -60,12 +60,10 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
 
         email_id = email_manager.get_email_id_by_subject(subject_link.text)
         if email_id:
-            if landscape_id == 2:
+            if email_client == "owa":
                 subject_link.click()
             else:
                 email.click()
-
-            unread_emails = selenium_controller.get_unread_emails()
 
             time.sleep(2)
 
@@ -73,7 +71,7 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
             reply = email_manager.get_email_response(email_id)
             if reply is not None:
                 sender_name = user["email"].split(".")[0].capitalize()
-                selenium_controller.reply_to_email(sender_name, reply["subject"], reply["email_body"])
+                selenium_controller.reply_to_email("", reply["subject"], reply["email_body"])
                 responded = True
 
             else:
@@ -83,5 +81,5 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
     if not responded and behaviour_general.get("is_conversation_starter", False):
         email = email_manager.get_email_starter()
         sender_name = user["email"].split(".")[0].capitalize()
-        selenium_controller.roundcube_write_email(
+        selenium_controller.write_email(
             sender_name, behaviour_cfg["email_receivers"], email["subject"], email["email_body"])

@@ -81,17 +81,15 @@ class SeleniumController:
         Prerequisites:
             - Logged into roundcube web client
         """
-        # The issue is here - you're using a parameter email_client that doesn't exist
-        # email_client = email_client if email_client else self.email_client
-        
-        # Corrected version:
-        email_client = self.email_client
         
         try:
-            if email_client == "owa":
-                # Filter by unread
-                self.driver.find_element(By.XPATH, "//button[.//span[contains(text(), 'Filter')]]").click()
-                self.driver.find_element(By.XPATH, "//button[.//span[contains(text(), 'Unread')]]").click()
+            if self.email_client == "owa":
+                try:
+                    self.driver.find_element(By.XPATH, "//button[.//span[contains(text(), 'Unread')]]").click()
+                except NoSuchElementException:
+                    # Filter by unread if unread button is unavailable, indicating that filter by unread is already set
+                    self.driver.find_element(By.XPATH, "//button[.//span[contains(text(), 'Filter')]]").click()
+                    self.driver.find_element(By.XPATH, "//button[.//span[contains(text(), 'Unread')]]").click()
                 unread_emails = self.wait(5).until(
                     EC.presence_of_all_elements_located(
                         (By.XPATH, "//div[contains(@class, '_lvv_w') and contains(@class, '_lvv_z') and (@role='option') and (contains(@class, 'listItemDefaultBackground') or contains(@class, 'ms-bgc-nl'))]"))
