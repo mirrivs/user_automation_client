@@ -17,8 +17,8 @@ TEMPLATES_DIR = os.path.join(BEHAVIOUR_DIR, "templates")
 
 # Custom imports
 from app_config import app_config
-from utils.app_logger import app_logger
-import utils.config_handler as config_handler
+from app_logger import app_logger
+import config_handler as config_handler
 
 # Scripts imports
 from scripts_pyautogui.os_utils import os_utils

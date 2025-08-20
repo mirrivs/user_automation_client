@@ -16,8 +16,8 @@ sys.path.append(top_dir)
 emails_file = os.path.join(parent_dir, "..", "templates", "emails.yml")
 
 # Custom imports
-import utils.config_handler as config_handler
-from utils.app_logger import app_logger
+import config_handler as config_handler
+from app_logger import app_logger
 
 
 class EmailManager:

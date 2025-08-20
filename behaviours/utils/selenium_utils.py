@@ -29,7 +29,7 @@ sys.path.append(top_dir)
 
 # Custom imports
 from behaviour_utils import BehaviourException
-from utils.app_logger import app_logger
+from app_logger import app_logger
 
 EmailClientType = Literal["owa", "roundcube"] | None
 

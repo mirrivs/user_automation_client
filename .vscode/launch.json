@@ -40,7 +40,6 @@
       "pathMappings": [
         {
           "localRoot": "${workspaceFolder}",
-          "remoteRoot": "C:\\user_automation"
         }
       ],
       "preLaunchTask": "start-python-in-console"

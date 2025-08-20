@@ -8,7 +8,7 @@ import platform
 
 from resource_path import resource_path
 from popup_window import PopupWindow
-from utils.app_logger import app_logger
+from app_logger import app_logger
 from user_automation_manager import IdleCycleStatus, UserAutomationManager
 
 

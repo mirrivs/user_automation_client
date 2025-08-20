@@ -7,7 +7,7 @@ import sys
 import pyautogui as pag
 import time
 
-from utils.app_logger import app_logger
+from app_logger import app_logger
 
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 

@@ -8,7 +8,7 @@ import platform
 import threading
 
 from typing import TypedDict, Optional
-from utils.app_logger import app_logger
+from app_logger import app_logger
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
 config_file = os.path.join(parent_dir, "config.yml")

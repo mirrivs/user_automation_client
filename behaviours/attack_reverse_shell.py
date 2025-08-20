@@ -17,7 +17,7 @@ sys.path.append(top_dir)
 
 # Custom imports
 from app_config import app_config
-from utils.app_logger import app_logger
+from app_logger import app_logger
 
 # Utilities imports
 from utils.selenium_utils import (

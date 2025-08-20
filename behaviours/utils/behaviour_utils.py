@@ -1,4 +1,4 @@
-from utils.app_logger import app_logger
+from app_logger import app_logger
 
 
 class BehaviourException(Exception):

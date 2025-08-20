@@ -9,9 +9,9 @@ from typing import Optional
 import requests
 import websocket
 
-from app_config import AppConfig, app_config
+from app_config import AppConfig, app_config, save_app_config
 from behaviour_manager import Behaviour, BehaviourManager
-from utils.config_handler import save_config
+from config_handler import save_config
 
 available_behaviours: dict[Behaviour] = {
     "attack_phishing": {
@@ -85,9 +85,6 @@ class UserAutomationManager:
         self.websocket_connection: Optional[websocket.WebSocket] = None
         self.is_connected = False
 
-        # Configuration lock for thread safety
-        self.config_lock = threading.Lock()
-
         # Configure logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
@@ -114,7 +111,7 @@ class UserAutomationManager:
             }
 
             # Send authentication request
-            auth_url = f"{app_config['app']['user_automation_server_http']}/connect"
+            auth_url = f"{app_config['app']['user_automation_server_http']}/client/connect"
             self.logger.info(f"Authenticating with server at {auth_url}")
 
             response = requests.post(
@@ -151,7 +148,7 @@ class UserAutomationManager:
     def _connect_websocket(self) -> bool:
         """Establish WebSocket connection for real-time updates"""
         try:
-            ws_url = f"{app_config['app']['user_automation_server_websocket']}/clients_socket"
+            ws_url = f"{app_config['app']['user_automation_server_websocket']}/client/client_socket"
 
             self.logger.info(f"Connecting to WebSocket at {ws_url}")
 
@@ -208,14 +205,13 @@ class UserAutomationManager:
     def _merge_config(self, new_config: dict):
         """Merge new configuration with existing config and save to file"""
         try:
-            with self.config_lock:
-                # Deep merge the configuration
-                self._deep_merge_dict(self.config, new_config)
-                
-                # Save to file
-                save_config(self.config)
-                
-                self.logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
+            # Deep merge the configuration
+            self._deep_merge_dict(self.config, new_config)
+            
+            # Save to file
+            save_app_config(self.config)
+            
+            self.logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
                 
         except Exception as e:
             self.logger.error(f"Error merging config: {e}")
@@ -232,29 +228,28 @@ class UserAutomationManager:
     def _update_behaviour_config(self, behaviour_id: str, behaviour_config: dict):
         """Update configuration for a specific behaviour and save to file"""
         try:
-            with self.config_lock:
-                # Ensure the nested structure exists
-                if "behaviour" not in self.config:
-                    self.config["behaviour"] = {}
-                if "behaviours" not in self.config["behaviour"]:
-                    self.config["behaviour"]["behaviours"] = {}
-                if behaviour_id not in self.config["behaviour"]["behaviours"]:
-                    self.config["behaviour"]["behaviours"][behaviour_id] = {}
-                
-                # Deep merge the behaviour configuration
-                self._deep_merge_dict(
-                    self.config["behaviour"]["behaviours"][behaviour_id], 
-                    behaviour_config
-                )
-                
-                # Save the updated configuration to file
-                save_config(self.config)
-                
-                self.logger.info(f"Behaviour configuration updated and saved for {behaviour_id}: {behaviour_config}")
-                
-                # Notify behaviour manager about config change if it has the method
-                if hasattr(self.behaviour_manager, 'reload_behaviour_config'):
-                    self.behaviour_manager.reload_behaviour_config(behaviour_id)
+            # Ensure the nested structure exists
+            if "behaviour" not in self.config:
+                self.config["behaviour"] = {}
+            if "behaviours" not in self.config["behaviour"]:
+                self.config["behaviour"]["behaviours"] = {}
+            if behaviour_id not in self.config["behaviour"]["behaviours"]:
+                self.config["behaviour"]["behaviours"][behaviour_id] = {}
+            
+            # Deep merge the behaviour configuration
+            self._deep_merge_dict(
+                self.config["behaviour"]["behaviours"][behaviour_id], 
+                behaviour_config
+            )
+            
+            # Save the updated configuration to file
+            save_app_config(self.config)
+            
+            self.logger.info(f"Behaviour configuration updated and saved for {behaviour_id}: {behaviour_config}")
+            
+            # Notify behaviour manager about config change if it has the method
+            if hasattr(self.behaviour_manager, 'reload_behaviour_config'):
+                self.behaviour_manager.reload_behaviour_config(behaviour_id)
                 
         except Exception as e:
             self.logger.error(f"Error updating behaviour config for {behaviour_id}: {e}")
@@ -352,11 +347,9 @@ class UserAutomationManager:
 
         while True:
             try:
-                # Check if config changed and reload if needed
-                with self.config_lock:
-                    config_changed = old_config != self.config
-                    if config_changed:
-                        old_config = self.config.copy()
+                config_changed = old_config != self.config
+                if config_changed:
+                    old_config = self.config.copy()
 
                 if config_changed:
                     # Only reload if behaviour manager has this method
@@ -398,27 +391,15 @@ class UserAutomationManager:
 
     def get_config(self):
         """Get the current configuration"""
-        with self.config_lock:
-            return self.config.copy()
+        return self.config.copy()
 
     def get_behaviour_config(self, behaviour_id: str):
         """Get configuration for a specific behaviour"""
         try:
-            with self.config_lock:
-                return self.config.get("behaviour", {}).get("behaviours", {}).get(behaviour_id, {}).copy()
+            return self.config.get("behaviour", {}).get("behaviours", {}).get(behaviour_id, {}).copy()
         except Exception:
             return {}
 
     def is_server_connected(self):
         """Check if connected to server"""
         return self.is_connected
-
-    def force_save_config(self):
-        """Force save current configuration to file"""
-        try:
-            with self.config_lock:
-                save_config(self.config)
-                self.logger.info("Configuration forcefully saved to file")
-        except Exception as e:
-            self.logger.error(f"Error force saving config: {e}")
-            raise e

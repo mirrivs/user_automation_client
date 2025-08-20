@@ -1,13 +1,10 @@
 #! ./env/bin/python3
 
-import atexit
 import os
 import sys
 
 # Custom imports
 from app_config import app_config
-from utils.app_logger import app_logger
-from utils.config_handler import clear_behaviour_cfg
 from system_tray import SystemTrayApp
 from user_automation_manager import UserAutomationManager
 
@@ -25,8 +22,6 @@ def main():
     tray_app = SystemTrayApp(user_automation_manager)
 
     user_automation_manager.start()
-
-    # atexit.register(clear_behaviour_cfg, config_file)
 
     sys.exit(tray_app.run())
 

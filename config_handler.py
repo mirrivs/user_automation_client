@@ -3,7 +3,7 @@ import yaml
 import sys
 import os
 
-from utils.app_logger import app_logger
+from app_logger import app_logger
 
 
 def load_config(config_file: str):
@@ -16,14 +16,14 @@ def load_config(config_file: str):
             sys.exit(1)
 
 
-def save_config(config_file: str, new_config: dict):
+def save_config(config_file: str, config: dict):
     """
     Write new config to config file
     """
     config_file = os.path.abspath(config_file)
     with open(config_file, "w", encoding="utf-8") as stream:
         try:
-            yaml.dump(new_config, stream, default_flow_style=False)
+            yaml.dump(config, stream, default_flow_style=False)
         except yaml.YAMLError as ex:
             print(f"Error writing configuration to '{config_file}': {ex}")
             sys.exit(1)

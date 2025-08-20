@@ -20,7 +20,7 @@ from behaviours.work_word import behaviour_work_word
 from cleanup_manager import CleanupManager
 
 # Custom imports
-from utils.app_logger import app_logger
+from app_logger import app_logger
 
 behaviour_mapping: dict[str, Callable] = {
     "attack_phishing": behaviour_attack_phishing,
