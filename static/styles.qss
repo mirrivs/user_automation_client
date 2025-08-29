@@ -48,4 +48,151 @@
   background-color: rgba(224, 224, 224, 0.5);
 }
 
-/* This is valid QSS (Qt Style Sheets) for the animation */
+/* Category Labels */
+.category-label {
+  font-weight: bold;
+  font-size: 13px;
+  color: #333;
+  margin: 8px 0 4px 0;
+  padding: 6px 8px;
+  background-color: #e8e8e8;
+  border-radius: 4px;
+}
+
+/* Section Labels */
+.section-label {
+  font-weight: bold;
+  font-size: 13px;
+  color: #333;
+  margin: 8px 0 4px 0;
+  padding: 6px 8px;
+  background-color: #e8e8e8;
+  border-radius: 4px;
+}
+
+/* Behaviour Buttons */
+.behaviour-button {
+  background-color: #f8f8f8;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  text-align: left;
+  font-size: 12px;
+  color: #333;
+  min-height: 35px;
+}
+
+.behaviour-button:hover {
+  background-color: #e8e8e8;
+  border-color: #b0b0b0;
+}
+
+.behaviour-button:pressed {
+  background-color: #d8d8d8;
+}
+
+/* Settings Button - Normal State */
+.settings-button {
+  background-color: #f8f8f8;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #333;
+  min-height: 35px;
+}
+
+.settings-button:hover {
+  background-color: #e8e8e8;
+}
+
+/* Settings Button - Paused State */
+.settings-button-paused {
+  background-color: #90ee90;
+  border: 1px solid #70cc70;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #333;
+  min-height: 35px;
+}
+
+.settings-button-paused:hover {
+  background-color: #70cc70;
+}
+
+/* Stop Button */
+.stop-button {
+  background-color: #f08080;
+  border: 1px solid #ff6060;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+
+.stop-button:hover {
+  background-color: #ff6060;
+}
+
+/* Status Labels */
+.status-label {
+  font-size: 11px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.status-label-running {
+  font-size: 11px;
+  color: #008800;
+  margin-top: 10px;
+}
+
+.status-label-error {
+  font-size: 11px;
+  color: #ff5500;
+  margin-top: 10px;
+}
+
+.current-behaviour-label {
+  font-size: 11px;
+  color: #666;
+}
+
+.current-behaviour-label-running {
+  font-size: 11px;
+  color: #008800;
+}
+
+/* Placeholder Text */
+.placeholder-text {
+  color: #666;
+  font-style: italic;
+  font-size: 11px;
+  margin: 20px 0;
+  padding: 10px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+
+/* Scroll Areas */
+QScrollArea {
+  border: none;
+  background-color: transparent;
+}
+
+QScrollBar:vertical {
+  border: none;
+  background: #f0f0f0;
+  width: 8px;
+  border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+  background: #c0c0c0;
+  border-radius: 4px;
+  min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+  background: #a0a0a0;
+}

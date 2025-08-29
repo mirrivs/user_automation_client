@@ -10,43 +10,43 @@ import requests
 import websocket
 
 from app_config import AppConfig, app_config, save_app_config
-from behaviour_manager import Behaviour, BehaviourManager
+from behaviour_manager import Behaviour, BehaviourCategory, BehaviourManager
 from config_handler import save_config
 
 available_behaviours: dict[Behaviour] = {
     "attack_phishing": {
         "name": "attack_phishing",
-        "is_idle": False,
+        "category": BehaviourCategory.ATTACK,
         "description": "Phishing attack",
     },
     "attack_ransomware": {
         "name": "attack_ransomware",
-        "is_idle": False,
+        "category": BehaviourCategory.ATTACK,
         "description": "Ransomware attack",
     },
     "attack_reverse_shell": {
         "name": "attack_reverse_shell",
-        "is_idle": False,
+        "category": BehaviourCategory.ATTACK,
         "description": "Reverse shell attack",
     },
     "procrastination": {
         "name": "procrastination",
-        "is_idle": True,
+        "category": BehaviourCategory.IDLE,
         "description": "Simulates procrastination activities like browsing",
     },
-    # "work_developer": {"name": "work_developer", "is_idle": True,
+    # "work_developer": {"name": "work_developer", "category": BehaviourCategory.IDLE,
     #     "description": "Simulates developer activities"},
     "work_emails": {
         "name": "work_emails",
-        "is_idle": True,
+        "category": BehaviourCategory.IDLE,
         "description": "Simulates working with emails",
     },
     "work_organization_web": {
         "name": "work_organization_web",
-        "is_idle": True,
+        "category": BehaviourCategory.IDLE,
         "description": "Simulates browsing organization website",
     },
-    # "work_word": {"name": "work_word", "is_idle": True,
+    # "work_word": {"name": "work_word", "category": BehaviourCategory.IDLE,
     #     "description": "Simulates word on Microsoft Word"},
 }
 
@@ -78,7 +78,7 @@ class UserAutomationManager:
             daemon=True,
         )
 
-        self.idle_cycle_status = IdleCycleStatus.PAUSED
+        self.idle_cycle_status = IdleCycleStatus.RUNNING
 
         # Server connection attributes
         self.access_token: Optional[str] = None

@@ -1,3 +1,4 @@
+from enum import Enum
 import os
 import queue
 import random
@@ -15,17 +16,18 @@ config_file = os.path.join(parent_dir, "config.yml")
 os_type = platform.system()
 
 
+class BehaviourCategory(Enum):
+    IDLE = "Idle"
+    ATTACK = "Attack"
+
 class Behaviour(TypedDict):
     name: str
-    is_idle: bool
+    category: BehaviourCategory
     description: Optional[str]
 
 
-class BehaviourWithId(TypedDict):
+class BehaviourWithId(Behaviour):
     id: str
-    name: str
-    is_idle: bool
-    description: Optional[str]
 
 
 class BehaviourManager:
@@ -41,7 +43,7 @@ class BehaviourManager:
         self.idle_behaviours: dict[str, Behaviour] = {
             b_key: b_val
             for b_key, b_val in self.available_behaviours.items()
-            if b_val["is_idle"]
+            if b_val["category"] == BehaviourCategory.IDLE
         }
 
         self.behaviour_queue = queue.PriorityQueue()
@@ -126,7 +128,6 @@ class BehaviourManager:
                 app_logger.info("No behaviour is currently running to terminate.")
         except Exception as ex:
             app_logger.error(f"Error while terminating behaviour: {ex}")
-            sys.exit(1)
 
     def run_behaviour(self, behaviour_id: str, force: bool = False):
         """
