@@ -27,7 +27,7 @@ def behaviour_attack_ransomware(cleanup_manager: CleanupManager):
     """
     os_type = platform.system()
 
-    landscape_id = int(app_config["landscape"])
+    landscape_id = int(app_config["app"]["landscape"])
 
     user = app_config["behaviour"]["general"]["user"]
     behaviour_general = app_config["behaviour"]

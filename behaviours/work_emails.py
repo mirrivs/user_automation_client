@@ -6,7 +6,7 @@ from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
 # Utilities imports
-from utils.selenium_utils import EdgeSeleniumController, FirefoxSeleniumController, EmailClientType
+from utils.selenium_utils import EdgeSeleniumController, FirefoxSeleniumController, EmailClientType, getSeleniumController
 from utils.email_manager import EmailManager
 
 # Scripts imports
@@ -26,12 +26,11 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
     behaviour_general = app_config["behaviour"]["general"]
     behaviour_cfg = app_config["behaviour"]["behaviours"]["work_emails"]
 
-    email_client: EmailClientType = "owa" if landscape_id in [2] else "roundcube"
-
-    os_type = platform.system()
     email_manager = EmailManager()
 
-    selenium_controller = FirefoxSeleniumController(email_client) if os_type == "Linux" else EdgeSeleniumController(email_client)
+    selenium_controller = getSeleniumController("owa" if landscape_id in [2] else "roundcube")
+    email_client = selenium_controller.email_client
+
     cleanup_manager.selenium_controller = selenium_controller
 
     selenium_controller.maximize_driver_window()
@@ -39,20 +38,20 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
 
     BrowserUtils.search_by_url(behaviour_general["organization_mail_server_url"])
 
-    selenium_controller.email_client_login(user["email"], user["password"])
+    email_client.login(user["email"], user["password"])
 
-    if email_client == "roundcube":
+    if email_client.type == "roundcube":
         selenium_controller.roundcube_set_language()
 
     time.sleep(4)
 
-    unread_emails = selenium_controller.get_unread_emails()
+    unread_emails = email_client.get_unread_emails()
 
     responded = False
     # Read and reply to received emails from email conversations
     for email in unread_emails:
         subject_link = None
-        if email_client == "owa":
+        if email_client == "outlook":
             subject_link = email.find_element(
                 By.XPATH, "//span[contains(@class, 'lvHighlightAllClass lvHighlightSubjectClass')]")
         else:
@@ -60,7 +59,7 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
 
         email_id = email_manager.get_email_id_by_subject(subject_link.text)
         if email_id:
-            if email_client == "owa":
+            if email_client == "outlook":
                 subject_link.click()
             else:
                 email.click()
@@ -71,7 +70,7 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
             reply = email_manager.get_email_response(email_id)
             if reply is not None:
                 sender_name = user["email"].split(".")[0].capitalize()
-                selenium_controller.reply_to_email("", reply["subject"], reply["email_body"])
+                email_client.reply_to_email("", reply["subject"], reply["email_body"])
                 responded = True
 
             else:
@@ -81,5 +80,5 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
     if not responded and behaviour_general.get("is_conversation_starter", False):
         email = email_manager.get_email_starter()
         sender_name = user["email"].split(".")[0].capitalize()
-        selenium_controller.write_email(
+        email_client.send_email(
             sender_name, behaviour_cfg["email_receivers"], email["subject"], email["email_body"])

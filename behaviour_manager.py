@@ -15,7 +15,6 @@ parent_dir = os.path.dirname(os.path.abspath(__file__))
 config_file = os.path.join(parent_dir, "config.yml")
 os_type = platform.system()
 
-
 class BehaviourCategory(Enum):
     IDLE = "Idle"
     ATTACK = "Attack"

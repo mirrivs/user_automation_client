@@ -12,6 +12,7 @@ import websocket
 from app_config import AppConfig, app_config, save_app_config
 from behaviour_manager import Behaviour, BehaviourCategory, BehaviourManager
 from config_handler import save_config
+from json_encoder import EnumEncoder
 
 available_behaviours: dict[Behaviour] = {
     "attack_phishing": {
@@ -177,7 +178,7 @@ class UserAutomationManager:
                 if config:
                     self._merge_config(config)
 
-            elif action == "behaviour_config_update":
+            elif action == "update_behaviour_config":
                 behaviour_id = data.get("behaviour_id")
                 behaviour_config = data.get("config", {})
 
@@ -236,21 +237,12 @@ class UserAutomationManager:
             if behaviour_id not in self.config["behaviour"]["behaviours"]:
                 self.config["behaviour"]["behaviours"][behaviour_id] = {}
             
-            # Deep merge the behaviour configuration
-            self._deep_merge_dict(
-                self.config["behaviour"]["behaviours"][behaviour_id], 
-                behaviour_config
-            )
-            
-            # Save the updated configuration to file
+            self.config["behaviour"]["behaviours"][behaviour_id] = behaviour_config 
+                
             save_app_config(self.config)
             
-            self.logger.info(f"Behaviour configuration updated and saved for {behaviour_id}: {behaviour_config}")
+            self.logger.info(f"Behaviour configuration updated and saved for {behaviour_id}")
             
-            # Notify behaviour manager about config change if it has the method
-            if hasattr(self.behaviour_manager, 'reload_behaviour_config'):
-                self.behaviour_manager.reload_behaviour_config(behaviour_id)
-                
         except Exception as e:
             self.logger.error(f"Error updating behaviour config for {behaviour_id}: {e}")
             raise e
@@ -269,7 +261,7 @@ class UserAutomationManager:
                 "timestamp": time.time(),
             }
 
-            self.websocket_connection.send(json.dumps(status_data))
+            self.websocket_connection.send(json.dumps(status_data, cls=EnumEncoder))
             self.logger.debug("Status update sent to server")
 
         except Exception as e:
