@@ -447,7 +447,7 @@ class EmailWebClient(SeleniumDriver):
 class OutlookWebAccessClient(EmailWebClient):
     def __init__(self, driver: webdriver):
         super().__init__(driver)
-        self.type = "outlook_web"
+        self.type = "outlook"
 
     def login(self, email: str, password: str):
         """

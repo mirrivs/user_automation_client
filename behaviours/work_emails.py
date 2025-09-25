@@ -51,7 +51,7 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
     # Read and reply to received emails from email conversations
     for email in unread_emails:
         subject_link = None
-        if email_client == "outlook":
+        if email_client.type == "outlook":
             subject_link = email.find_element(
                 By.XPATH, "//span[contains(@class, 'lvHighlightAllClass lvHighlightSubjectClass')]")
         else:
@@ -59,7 +59,7 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
 
         email_id = email_manager.get_email_id_by_subject(subject_link.text)
         if email_id:
-            if email_client == "outlook":
+            if email_client.type == "outlook":
                 subject_link.click()
             else:
                 email.click()
@@ -70,7 +70,7 @@ def behaviour_work_emails(cleanup_manager: CleanupManager):
             reply = email_manager.get_email_response(email_id)
             if reply is not None:
                 sender_name = user["email"].split(".")[0].capitalize()
-                email_client.reply_to_email("", reply["subject"], reply["email_body"])
+                email_client.reply_to_email(sender_name, reply["subject"], reply["email_body"])
                 responded = True
 
             else:
