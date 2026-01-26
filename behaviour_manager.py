@@ -2,22 +2,42 @@ from enum import Enum
 import os
 import queue
 import random
-import signal
-import subprocess
-import sys
 import platform
-import threading
 
 from typing import TypedDict, Optional
 from app_logger import app_logger
+
+# Import behaviour classes
+from behaviours.attack_phishing import BehaviourAttackPhishing
+from behaviours.attack_ransomware import BehaviourAttackRansomware
+from behaviours.attack_reverse_shell import BehaviourAttackReverseShell
+from behaviours.procrastination import BehaviourProcrastination
+from behaviours.work_developer import BehaviourWorkDeveloper
+from behaviours.work_emails import BehaviourWorkEmails
+from behaviours.work_organization_web import BehaviourWorkOrganizationWeb
+from behaviours.work_word import BehaviourWorkWord
+from cleanup_manager import CleanupManager
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
 config_file = os.path.join(parent_dir, "config.yml")
 os_type = platform.system()
 
+BEHAVIOUR_MAPPING = {
+    "attack_phishing": BehaviourAttackPhishing,
+    "attack_ransomware": BehaviourAttackRansomware,
+    "attack_reverse_shell": BehaviourAttackReverseShell,
+    "procrastination": BehaviourProcrastination,
+    "work_developer": BehaviourWorkDeveloper,
+    "work_emails": BehaviourWorkEmails,
+    "work_organization_web": BehaviourWorkOrganizationWeb,
+    "work_word": BehaviourWorkWord,
+}
+
+
 class BehaviourCategory(Enum):
     IDLE = "Idle"
     ATTACK = "Attack"
+
 
 class Behaviour(TypedDict):
     name: str
@@ -29,61 +49,70 @@ class BehaviourWithId(Behaviour):
     id: str
 
 
+def get_available_behaviours_from_mapping() -> dict[str, Behaviour]:
+    """
+    Extract behaviour metadata from BEHAVIOUR_MAPPING classes.
+    Returns a dictionary compatible with the Behaviour TypedDict format.
+    """
+    available_behaviours = {}
+
+    for behaviour_id, behaviour_class in BEHAVIOUR_MAPPING.items():
+        # Get category enum value from string
+        category_str = getattr(behaviour_class, "category", "IDLE")
+        category = BehaviourCategory[category_str] if hasattr(BehaviourCategory, category_str) else BehaviourCategory.IDLE
+
+        available_behaviours[behaviour_id] = {
+            "name": getattr(behaviour_class, "name", behaviour_id),
+            "display_name": getattr(behaviour_class, "display_name", behaviour_id),
+            "category": category,
+            "description": getattr(behaviour_class, "description", ""),
+        }
+
+    return available_behaviours
+
+
 class BehaviourManager:
     """
-    Behaviour controller for automation 
-    Controls the execution and tracking of automated behaviours.
+    Behaviour controller for automation
+    Controls the execution and tracking of automated behaviours using interruptible threads.
     """
 
     def __init__(self, available_behaviours: dict[str, Behaviour] = None):
         self.available_behaviours = (
             available_behaviours if available_behaviours is not None else {}
         )
-        self.idle_behaviours: dict[str, Behaviour] = {
-            b_key: b_val
-            for b_key, b_val in self.available_behaviours.items()
-            if b_val["category"] == BehaviourCategory.IDLE
-        }
+
+        self.behaviours: dict[str, Behaviour] = self.available_behaviours
+
+        # Organize behaviours by category
+        self.behaviours_by_category: dict[BehaviourCategory, dict[str, Behaviour]] = {}
+        for b_key, b_val in self.available_behaviours.items():
+            category = b_val["category"]
+            if category not in self.behaviours_by_category:
+                self.behaviours_by_category[category] = {}
+            self.behaviours_by_category[category][b_key] = b_val
+
+        # Keep idle_behaviours for backward compatibility
+        self.idle_behaviours: dict[str, Behaviour] = self.behaviours_by_category.get(
+            BehaviourCategory.IDLE, {}
+        )
 
         self.behaviour_queue = queue.PriorityQueue()
         self.behaviour_history: list[Behaviour] = []
         self.current_behaviour: BehaviourWithId = None
         self.next_behaviour: BehaviourWithId = None
 
-        self.behaviour_process: subprocess.Popen[bytes] = None
-        self.output_threads = []  # Track output forwarding threads
+        # Changed from process to thread
+        self.behaviour_thread = None
+        self.cleanup_manager = None
 
-    def _forward_output(self, pipe, prefix=""):
+    def _check_thread_status(self):
         """
-        Forward output from subprocess to main process stdout
+        Check if the current behaviour thread has finished and handle cleanup if needed
         """
-        try:
-            if pipe is None:
-                app_logger.error("Pipe is None, cannot forward output")
-                return
-                
-            # Since we're using text=True, we can iterate directly over lines
-            for line in pipe:
-                line = line.rstrip()
-                if line:
-                    print(f"{prefix}{line}", flush=True)
-        except Exception as ex:
-            app_logger.error(f"Error forwarding output: {ex}")
-        finally:
-            if pipe:
-                pipe.close()
-            
-            # Check if process finished while we were forwarding output
-            self._check_process_status()
-
-    def _check_process_status(self):
-        """
-        Check if the current behaviour process has finished and handle cleanup if needed
-        """
-        if self.behaviour_process is not None:
-            exit_code = self.behaviour_process.poll()
-            if exit_code is not None:  # Process has finished
-                app_logger.info(f"Behaviour process finished with exit code: {exit_code}")
+        if self.behaviour_thread is not None:
+            if not self.behaviour_thread.is_alive():
+                app_logger.info("Behaviour thread finished")
                 self.handle_behaviour_finish()
 
     def run_next_behaviour(self):
@@ -93,8 +122,8 @@ class BehaviourManager:
         """
         try:
             # First check if current behaviour has finished
-            self._check_process_status()
-            
+            self._check_thread_status()
+
             if not self.behaviour_queue.empty():
                 _, behaviour = self.behaviour_queue.get()
                 self.run_behaviour(behaviour)
@@ -107,19 +136,19 @@ class BehaviourManager:
 
     def terminate_behaviour(self):
         """
-        Terminates the currently running behaviour process, if any.
+        Terminates the currently running behaviour thread, if any.
+        Immediately stops the thread and triggers cleanup.
         """
         try:
-            if self.behaviour_process is not None:
-                if os_type == "Linux":
-                    self.behaviour_process.send_signal(signal.SIGINT)
-                else:
-                    self.behaviour_process.send_signal(signal.CTRL_BREAK_EVENT)
+            if self.behaviour_thread is not None:
+                app_logger.info(f"Terminating behaviour: {self.current_behaviour['id']}")
 
-                # Wait for output threads to finish
-                for thread in self.output_threads:
-                    thread.join(timeout=1.0)
-                self.output_threads.clear()
+                if self.behaviour_thread.is_alive():
+                    self.behaviour_thread.stop()
+                    self.behaviour_thread.join(timeout=2.0)
+
+                    if self.behaviour_thread.is_alive():
+                        app_logger.warning("Thread did not stop gracefully after 2 seconds")
 
                 self.handle_behaviour_finish()
                 app_logger.info(f"Terminated behaviour: {self.current_behaviour['id']}")
@@ -130,85 +159,61 @@ class BehaviourManager:
 
     def run_behaviour(self, behaviour_id: str, force: bool = False):
         """
-        Executes a behaviour script as a subprocess, with the path to Python
-        adjusted based on the operating system.
+        Executes a behaviour in an interruptible thread.
         """
         # Check if current behaviour has finished before starting new one
-        self._check_process_status()
-        
-        if self.behaviour_process is not None and force == False:
+        self._check_thread_status()
+
+        if self.behaviour_thread is not None and force is False:
             app_logger.info(
-                f"Behaviour {self.current_behaviour['id']} already running. Use `force` parameter to forcefully kill and start the new behaviour."
+                f"Behaviour {self.current_behaviour['id']} already running. "
+                f"Use `force` parameter to forcefully stop and start the new behaviour."
             )
             return
 
         try:
+            # Validate behaviour ID
+            if behaviour_id not in BEHAVIOUR_MAPPING:
+                app_logger.error(f"Invalid behaviour ID: {behaviour_id}")
+                return
+
             self.current_behaviour = {
                 **self.available_behaviours[behaviour_id],
                 "id": behaviour_id,
             }
             app_logger.info(f"Starting behaviour: {self.current_behaviour['id']}")
 
-            if os_type == "Linux":
-                env_python_path = os.path.join(parent_dir, "env", "bin", "python3")
-            else:
-                env_python_path = os.path.join(parent_dir, "env", "Scripts", "python")
+            # Create cleanup manager for this behaviour
+            self.cleanup_manager = CleanupManager()
 
-            behaviour_file = os.path.join(parent_dir, "run_behaviour.py")
-            cmd_args = [env_python_path, "-u", behaviour_file, behaviour_id]
+            # Get behaviour class and instantiate
+            behaviour_class = BEHAVIOUR_MAPPING[behaviour_id]
+            self.behaviour_thread = behaviour_class(self.cleanup_manager)
 
-            if os_type == "Linux":
-                self.behaviour_process = subprocess.Popen(
-                    cmd_args,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    stdin=subprocess.PIPE,
-                    text=True,
-                    bufsize=1,
-                )
-            else:
-                self.behaviour_process = subprocess.Popen(
-                    cmd_args,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    stdin=subprocess.PIPE,
-                    text=True,
-                    bufsize=1,
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
-                )
+            # Start the behaviour thread
+            self.behaviour_thread.start()
 
-            # Check if process was created successfully and has stdout
-            if self.behaviour_process and self.behaviour_process.stdout:
-                # Start thread to forward stdout
-                stdout_thread = threading.Thread(
-                    target=self._forward_output,
-                    args=(self.behaviour_process.stdout, f"[{behaviour_id}] "),
-                    daemon=True
-                )
-                stdout_thread.start()
-                self.output_threads.append(stdout_thread)
-            else:
-                app_logger.error(f"Failed to create subprocess or capture stdout for {behaviour_id}")
-
-            app_logger.info(f"Behaviour {behaviour_id} started")
+            app_logger.info(f"Behaviour '{behaviour_id}' started (Thread ID: {self.behaviour_thread.ident})")
             self.update_behaviour_history(behaviour_id)
 
-            return self.behaviour_process
+            return self.behaviour_thread
         except Exception as ex:
-            app_logger.error(f"Error while running behaviour {behaviour_id}: {ex}")
+            app_logger.error(f"Error while running behaviour {behaviour_id}: {ex}", exc_info=True)
             self.current_behaviour = None
+            self.behaviour_thread = None
+            self.cleanup_manager = None
 
     def is_behaviour_running(self):
         """
-        Checks if a behaviour process is currently running.
+        Checks if a behaviour thread is currently running.
         """
         try:
             # First check and update status
-            self._check_process_status()
-            
+            self._check_thread_status()
+
             return (
-                self.behaviour_process is not None
-                and self.behaviour_process.poll() is None
+                self.behaviour_thread is not None
+                and self.behaviour_thread.is_alive()
             )
         except Exception as ex:
             app_logger.error(f"Error while checking if behaviour is running: {ex}")
@@ -264,23 +269,16 @@ class BehaviourManager:
         """
         Handle cleanup when a behaviour finishes (either successfully or with an error)
         """
-        if self.behaviour_process is None:
+        if self.behaviour_thread is None:
             return
-            
-        exit_code = self.behaviour_process.poll()
-        
-        if exit_code == 0:
-            app_logger.info(f"Behaviour `{self.current_behaviour['name']}` finished successfully")
-        else:
-            app_logger.error(f"Behaviour `{self.current_behaviour['name']}` finished with error (exit code: {exit_code})")
 
-        # Wait for output threads to finish
-        for thread in self.output_threads:
-            thread.join(timeout=1.0)
-        self.output_threads.clear()
+        # Thread cleanup is already handled by BehaviourThread.run() method
+        app_logger.info(f"Behaviour `{self.current_behaviour['name']}` finished")
 
-        self.behaviour_process = None
+        # Clear references
+        self.behaviour_thread = None
         self.current_behaviour = None
+        self.cleanup_manager = None
 
     def get_behaviour(self, behaviour_id: str) -> str | None:
         return self.available_behaviours.get(behaviour_id)
@@ -289,18 +287,15 @@ class BehaviourManager:
         """
         Get detailed status information about the current behaviour
         """
-        if self.behaviour_process is None:
+        if self.behaviour_thread is None:
             return {
                 "running": False,
                 "current_behaviour": None,
-                "exit_code": None
             }
-        
-        exit_code = self.behaviour_process.poll()
-        is_running = exit_code is None
-        
+
+        is_running = self.behaviour_thread.is_alive()
+
         return {
             "running": is_running,
             "current_behaviour": self.current_behaviour,
-            "exit_code": exit_code
         }

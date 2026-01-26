@@ -2,6 +2,12 @@
 
 import os
 import sys
+import multiprocessing
+
+# Enable multiprocessing support for PyInstaller
+# This must be called before any other multiprocessing code
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
 
 # Custom imports
 from app_config import app_config

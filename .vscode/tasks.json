@@ -2,14 +2,68 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "start-python-in-console",
+      "label": "start-python-debug-server-linux",
       "type": "shell",
-      "command": "powershell.exe -File ${workspaceFolder}/launch_in_console.ps1 ${command:python.interpreterPath} ${file}",
+      "command": "bash",
+      "args": [
+        "${workspaceFolder}/.vscode/start_debug_server.sh",
+        "${workspaceFolder}/env/bin/python",
+        "${file}"
+      ],
       "presentation": {
-        "reveal": "always",
-        "panel": "new"
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true,
+        "reveal": "always"
       },
-      "problemMatcher": []
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^Ready to attach debugger$",
+          "file": 1,
+          "line": 1,
+          "column": 1,
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Starting debug server",
+          "endsPattern": "^Ready to attach debugger"
+        }
+      }
+    },
+    {
+      "label": "start-python-debug-server-windows",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/start_debug_server.ps1",
+        "-pythonPath", "${workspaceFolder}/env/Scripts/python.exe",
+        "-scriptPath", "${file}"
+      ],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true,
+        "reveal": "always"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^Ready to attach debugger$",
+          "file": 1,
+          "line": 1,
+          "column": 1,
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Starting debug server",
+          "endsPattern": "^Ready to attach debugger"
+        }
+      }
     }
   ]
 }

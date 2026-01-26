@@ -25,6 +25,7 @@ from utils.selenium_utils import (
     EmailClientType,
     FirefoxSeleniumController,
 )
+from utils.behaviour_utils import BehaviourThread
 
 # Scripts imports
 from scripts_pyautogui.win_utils import win_utils
@@ -35,93 +36,110 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-def behaviour_attack_reverse_shell(cleanup_manager: CleanupManager):
+class BehaviourAttackReverseShell(BehaviourThread):
     """
-    This behaviour downloads a attachment in specific email and opens it
+    Behaviour for downloading and opening malicious reverse shell attachment from email.
+
+    This class can be directly instantiated and started from the behaviour manager.
     """
-    os_type = platform.system()
 
-    # Read config
-    config_file = os.path.join(top_dir, "config.yml")
+    # Behaviour metadata
+    name = "attack_reverse_shell"
+    display_name = "Reverse Shell"
+    category = "ATTACK"
+    description = "Reverse shell attack"
 
-    landscape_id = int(app_config["app"]["landscape"])
+    def __init__(self, cleanup_manager: CleanupManager):
+        super().__init__(cleanup_manager)
+        self.os_type = platform.system()
+        self.landscape_id = int(app_config["app"]["landscape"])
+        self.behaviour_cfg = app_config["behaviour"]
+        self.user = self.behaviour_cfg["general"]["user"]
+        self.attack_reverse_shell_cfg = self.behaviour_cfg["attack_reverse_shell"]
+        self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
+        self.selenium_controller = None
 
-    behaviour_cfg = app_config["behaviour"]
-    user = behaviour_cfg["general"]["user"]
-    attack_reverse_shell_cfg = behaviour_cfg["attack_reverse_shell"]
+    def run_behaviour(self):
+        """Main behaviour execution - can be interrupted at any time"""
+        app_logger.info("Starting attack_reverse_shell behaviour")
 
-    email_client: EmailClientType = "owa" if landscape_id in [2] else "roundcube"
+        self.selenium_controller = (
+            FirefoxSeleniumController()
+            if self.os_type == "Linux"
+            else EdgeSeleniumController()
+        )
 
-    selenium_controller = (
-        FirefoxSeleniumController() if os_type == "Linux" else EdgeSeleniumController()
-    )
-    cleanup_manager.selenium_controller = selenium_controller
+        # Register selenium controller with cleanup manager
+        self.cleanup_manager.selenium_controller = self.selenium_controller
+        self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
 
-    selenium_controller.maximize_driver_window()
+        self.selenium_controller.maximize_driver_window()
 
-    time.sleep(4)
+        time.sleep(4)
 
-    BrowserUtils.search_by_url(behaviour_cfg["general"]["organization_mail_server_url"])
+        BrowserUtils.search_by_url(self.behaviour_cfg["general"]["organization_mail_server_url"])
 
-    time.sleep(4)
+        time.sleep(4)
 
-    selenium_controller.email_client_login(user["email"], user["password"])
+        self.selenium_controller.email_client_login(self.user["email"], self.user["password"])
 
-    if email_client == "roundcube":
-        selenium_controller.roundcube_set_language()
+        if self.email_client_type == "roundcube":
+            self.selenium_controller.roundcube_set_language()
 
-    time.sleep(4)
+        time.sleep(4)
 
-    unread_emails = selenium_controller.get_unread_emails()
+        unread_emails = self.selenium_controller.get_unread_emails()
 
-    # Read and reply to received emails from email conversations
-    for email in unread_emails:
-        subject_link = None
-        if email_client == "owa":
-            subject_link = email.find_element(
-                By.XPATH,
-                "//span[contains(@class, 'lvHighlightAllClass lvHighlightSubjectClass')]",
-            )
-        else:
-            subject_link = email.find_element(By.CSS_SELECTOR, "td.subject a")
+        # Read and reply to received emails from email conversations
+        for email in unread_emails:
+            subject_link = None
+            if self.email_client_type == "owa":
+                subject_link = email.find_element(
+                    By.XPATH,
+                    "//span[contains(@class, 'lvHighlightAllClass lvHighlightSubjectClass')]",
+                )
+            else:
+                subject_link = email.find_element(By.CSS_SELECTOR, "td.subject a")
 
-        if subject_link.text == attack_reverse_shell_cfg["malicious_email_subject"]:
-            subject_link.click()
-            break
+            if subject_link.text == self.attack_reverse_shell_cfg["malicious_email_subject"]:
+                subject_link.click()
+                break
 
-    if email_client == "roundcube":
-        iframe = selenium_controller.driver.find_element(By.NAME, "messagecontframe")
-        time.sleep(1)
-        selenium_controller.driver.switch_to.frame(iframe)
-
-    downloaded_attachments = (
-        selenium_controller.email_client_download_email_attachments()
-    )
-
-    for attachment_name in downloaded_attachments:
-        if os_type == "Linux":
-            print("linux behaviour")
-        else:
-            win_utils.open_downloads_folder()
+        if self.email_client_type == "roundcube":
+            iframe = self.selenium_controller.driver.find_element(By.NAME, "messagecontframe")
             time.sleep(1)
-            win_utils.ctrlf()
-            time.sleep(0.5)
-            pag.write(attachment_name.split(".")[0], 0.1)
-            time.sleep(0.5)
-            pag.press("enter")
-            time.sleep(2)
-            pag.press("tab")
-            time.sleep(0.5)
-            pag.press("tab")
-            time.sleep(0.5)
-            pag.hotkey("ctrl", "space")
-            time.sleep(0.5)
-            pag.hotkey("alt", "enter")
-            time.sleep(0.5)
-            pag.press("k")
-            time.sleep(0.5)
-            pag.press("a")
-            time.sleep(0.5)
-            pag.press("enter")
-            time.sleep(0.5)
-            pag.press("enter")
+            self.selenium_controller.driver.switch_to.frame(iframe)
+
+        downloaded_attachments = (
+            self.selenium_controller.email_client_download_email_attachments()
+        )
+
+        for attachment_name in downloaded_attachments:
+            if self.os_type == "Linux":
+                print("linux behaviour")
+            else:
+                win_utils.open_downloads_folder()
+                time.sleep(1)
+                win_utils.ctrlf()
+                time.sleep(0.5)
+                pag.write(attachment_name.split(".")[0], 0.1)
+                time.sleep(0.5)
+                pag.press("enter")
+                time.sleep(2)
+                pag.press("tab")
+                time.sleep(0.5)
+                pag.press("tab")
+                time.sleep(0.5)
+                pag.hotkey("ctrl", "space")
+                time.sleep(0.5)
+                pag.hotkey("alt", "enter")
+                time.sleep(0.5)
+                pag.press("k")
+                time.sleep(0.5)
+                pag.press("a")
+                time.sleep(0.5)
+                pag.press("enter")
+                time.sleep(0.5)
+                pag.press("enter")
+
+        app_logger.info("Completed attack_reverse_shell behaviour")

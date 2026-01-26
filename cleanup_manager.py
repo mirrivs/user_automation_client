@@ -70,7 +70,6 @@ class CleanupManager:
 
     def run_cleanup(self) -> None:
         """Execute all cleanup tasks in reverse order (LIFO)"""
-        # Execute cleanup tasks in reverse order (last in, first out)
         for task in reversed(self.cleanup_stack):
             try:
                 function = task["function"]
@@ -80,13 +79,5 @@ class CleanupManager:
             except Exception as e:
                 print(f"Error during cleanup: {e}")
 
-        # Clear the cleanup stack after execution
         self.cleanup_stack = []
 
-        # Also quit the selenium driver if it exists and wasn't already handled
-        if self.selenium_controller:
-            try:
-                self.selenium_controller.quit_driver()
-            except Exception as e:
-                print(f"Error quitting selenium driver: {e}")
-            self.selenium_controller = None

@@ -9,6 +9,9 @@ from app_config import app_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
+# Utilities imports
+from utils.behaviour_utils import BehaviourThread
+
 # Scripts imports
 from scripts_pyautogui.os_utils import os_utils
 
@@ -19,46 +22,62 @@ TEMPLATES_DIR = os.path.join(BEHAVIOUR_DIR, "templates")
 LINUX_FILE = os.path.join(TEMPLATES_DIR, "c_program.txt")
 WINDOWS_FILE = os.path.join(TEMPLATES_DIR, "ps_program.txt")
 
-def behaviour_work_developer(cleanup_manager: CleanupManager):
+
+class BehaviourWorkDeveloper(BehaviourThread):
     """
-    This behaviour generates or responds to predefined email conversation using Roundcube web client 
+    Behaviour for simulating developer work by writing and running code.
+
+    This class can be directly instantiated and started from the behaviour manager.
     """
-    user = app_config["behaviour"]["general"]["user"]
 
-    filename = random.choice(["super_complex_code", "hello_world", "iam_working"])
+    # Behaviour metadata
+    name = "work_developer"
+    display_name = "Developer Work"
+    category = "IDLE"
+    description = "Simulates developer activities"
 
-    os_type = platform.system()
+    def __init__(self, cleanup_manager: CleanupManager):
+        super().__init__(cleanup_manager)
+        self.user = app_config["behaviour"]["general"]["user"]
+        self.os_type = platform.system()
+        self.filename = random.choice(["super_complex_code", "hello_world", "iam_working"])
 
-    os_utils.open_terminal()
-    cleanup_manager.add_cleanup_task(os_utils.close_terminal)
+    def run_behaviour(self):
+        """Main behaviour execution - can be interrupted at any time"""
+        app_logger.info("Starting work_developer behaviour")
 
-    time.sleep(2)
+        os_utils.open_terminal()
+        self.cleanup_manager.add_cleanup_task(os_utils.close_terminal)
 
-    file_content = "Placeholder text"
+        time.sleep(2)
 
-    if os_type == "Linux":
-        with open(LINUX_FILE, "r", encoding="utf-8") as file:
-            file_content = file.read()
-    else:
-        filename = f"{filename}.ps1"
-        with open(WINDOWS_FILE, "r", encoding="utf-8") as file:
-            file_content = file.read()
+        file_content = "Placeholder text"
 
-    os_utils.write_file(filename, file_content)
-    
-    cleanup_manager.add_cleanup_task(os_utils.delete_file, filename)
-    
-    time.sleep(1)
+        if self.os_type == "Linux":
+            with open(LINUX_FILE, "r", encoding="utf-8") as file:
+                file_content = file.read()
+        else:
+            self.filename = f"{self.filename}.ps1"
+            with open(WINDOWS_FILE, "r", encoding="utf-8") as file:
+                file_content = file.read()
 
-    if os_type == "Linux":
-        os_utils.run_c_program(filename)
-    else:
-        os_utils.run_ps_program(filename)
+        os_utils.write_file(self.filename, file_content)
 
-    time.sleep(4)
+        self.cleanup_manager.add_cleanup_task(os_utils.delete_file, self.filename)
 
-    file_cleanup_task = cleanup_manager.pop_cleanup_task()
-    file_cleanup_task['function'](*file_cleanup_task.get('args', ()), **file_cleanup_task.get('kwargs', {}))
-    
-    terminal_cleanup_task = cleanup_manager.pop_cleanup_task()
-    terminal_cleanup_task['function'](*terminal_cleanup_task.get('args', ()), **terminal_cleanup_task.get('kwargs', {}))
+        time.sleep(1)
+
+        if self.os_type == "Linux":
+            os_utils.run_c_program(self.filename)
+        else:
+            os_utils.run_ps_program(self.filename)
+
+        time.sleep(4)
+
+        file_cleanup_task = self.cleanup_manager.pop_cleanup_task()
+        file_cleanup_task['function'](*file_cleanup_task.get('args', ()), **file_cleanup_task.get('kwargs', {}))
+
+        terminal_cleanup_task = self.cleanup_manager.pop_cleanup_task()
+        terminal_cleanup_task['function'](*terminal_cleanup_task.get('args', ()), **terminal_cleanup_task.get('kwargs', {}))
+
+        app_logger.info("Completed work_developer behaviour")

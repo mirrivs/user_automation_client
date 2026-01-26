@@ -10,46 +10,14 @@ import requests
 import websocket
 
 from app_config import AppConfig, app_config, save_app_config
-from behaviour_manager import Behaviour, BehaviourCategory, BehaviourManager
+from behaviour_manager import BehaviourManager, get_available_behaviours_from_mapping
 from config_handler import save_config
 from json_encoder import EnumEncoder
 
-available_behaviours: dict[Behaviour] = {
-    "attack_phishing": {
-        "name": "attack_phishing",
-        "category": BehaviourCategory.ATTACK,
-        "description": "Phishing attack",
-    },
-    "attack_ransomware": {
-        "name": "attack_ransomware",
-        "category": BehaviourCategory.ATTACK,
-        "description": "Ransomware attack",
-    },
-    "attack_reverse_shell": {
-        "name": "attack_reverse_shell",
-        "category": BehaviourCategory.ATTACK,
-        "description": "Reverse shell attack",
-    },
-    "procrastination": {
-        "name": "procrastination",
-        "category": BehaviourCategory.IDLE,
-        "description": "Simulates procrastination activities like browsing",
-    },
-    # "work_developer": {"name": "work_developer", "category": BehaviourCategory.IDLE,
-    #     "description": "Simulates developer activities"},
-    "work_emails": {
-        "name": "work_emails",
-        "category": BehaviourCategory.IDLE,
-        "description": "Simulates working with emails",
-    },
-    "work_organization_web": {
-        "name": "work_organization_web",
-        "category": BehaviourCategory.IDLE,
-        "description": "Simulates browsing organization website",
-    },
-    # "work_word": {"name": "work_word", "category": BehaviourCategory.IDLE,
-    #     "description": "Simulates word on Microsoft Word"},
-}
+logger = logging.getLogger(__name__)
+
+# Get available behaviours from the behaviour classes themselves
+available_behaviours = get_available_behaviours_from_mapping()
 
 
 class IdleCycleStatus(Enum):
@@ -86,10 +54,6 @@ class UserAutomationManager:
         self.websocket_connection: Optional[websocket.WebSocket] = None
         self.is_connected = False
 
-        # Configure logging
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
-
     def set_idle_cycle_status(self, status: IdleCycleStatus):
         self.idle_cycle_status = status
 
@@ -101,7 +65,7 @@ class UserAutomationManager:
             hostname = socket.gethostname()
 
             if not username or not password:
-                self.logger.error("Username or password not configured")
+                logger.error("Username or password not configured")
                 return False
 
             # Prepare authentication data
@@ -113,7 +77,7 @@ class UserAutomationManager:
 
             # Send authentication request
             auth_url = f"{app_config['app']['user_automation_server_http']}/client/connect"
-            self.logger.info(f"Authenticating with server at {auth_url}")
+            logger.info(f"Authenticating with server at {auth_url}")
 
             response = requests.post(
                 auth_url,
@@ -131,19 +95,19 @@ class UserAutomationManager:
                 if server_config:
                     self._merge_config(server_config)
                     
-                self.logger.info("Successfully authenticated with server")
+                logger.info("Successfully authenticated with server")
                 return True
             else:
-                self.logger.error(
-                    f"Authentication failed: {response.status_code} - {response.text}"
+                logger.error(
+                    f"Authentication failed: {response.status_code}"
                 )
                 return False
 
         except requests.RequestException as e:
-            self.logger.error(f"Error during authentication: {e}")
+            logger.error(f"Error during authentication: {e}")
             return False
         except Exception as e:
-            self.logger.error(f"Unexpected error during authentication: {e}")
+            logger.error(f"Unexpected error during authentication: {e}")
             return False
 
     def _connect_websocket(self) -> bool:
@@ -151,7 +115,7 @@ class UserAutomationManager:
         try:
             ws_url = f"{app_config['app']['user_automation_server_websocket']}/client/client_socket"
 
-            self.logger.info(f"Connecting to WebSocket at {ws_url}")
+            logger.info(f"Connecting to WebSocket at {ws_url}")
 
             # Create WebSocket connection
             self.websocket_connection = websocket.WebSocket()
@@ -160,11 +124,11 @@ class UserAutomationManager:
             # Send authentication token
             self.websocket_connection.send(self.access_token)
 
-            self.logger.info("WebSocket connection established")
+            logger.info("WebSocket connection established")
             return True
 
         except Exception as e:
-            self.logger.error(f"Error connecting to WebSocket: {e}")
+            logger.error(f"Error connecting to WebSocket: {e}")
             return False
 
     def _handle_websocket_message(self, message: str):
@@ -191,17 +155,17 @@ class UserAutomationManager:
                     self.run_behaviour(behaviour_id, True)
                     
             else:
-                self.logger.debug(f"Unknown action type: {action}")
+                logger.debug(f"Unknown action type: {action}")
 
         except json.JSONDecodeError as e:
-            self.logger.error(f"Error parsing WebSocket message: {e}")
+            logger.error(f"Error parsing WebSocket message: {e}")
         except Exception as e:
-            self.logger.error(f"Error handling WebSocket message: {e}")
+            logger.error(f"Error handling WebSocket message: {e}")
     
     def run_behaviour(self, behaviour_id: str, force: bool = False):
         """Run a specific behaviour"""
         self.behaviour_manager.run_behaviour(behaviour_id, force)
-        self.logger.info(f"Running behaviour: {behaviour_id}")
+        logger.info(f"Running behaviour: {behaviour_id}")
 
     def _merge_config(self, new_config: dict):
         """Merge new configuration with existing config and save to file"""
@@ -212,10 +176,10 @@ class UserAutomationManager:
             # Save to file
             save_app_config(self.config)
             
-            self.logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
+            logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
                 
         except Exception as e:
-            self.logger.error(f"Error merging config: {e}")
+            logger.error(f"Error merging config: {e}")
             raise e
 
     def _deep_merge_dict(self, target: dict, source: dict):
@@ -241,10 +205,10 @@ class UserAutomationManager:
                 
             save_app_config(self.config)
             
-            self.logger.info(f"Behaviour configuration updated and saved for {behaviour_id}")
+            logger.info(f"Behaviour configuration updated and saved for {behaviour_id}")
             
         except Exception as e:
-            self.logger.error(f"Error updating behaviour config for {behaviour_id}: {e}")
+            logger.error(f"Error updating behaviour config for {behaviour_id}: {e}")
             raise e
 
     def _send_status_update(self):
@@ -262,32 +226,32 @@ class UserAutomationManager:
             }
 
             self.websocket_connection.send(json.dumps(status_data, cls=EnumEncoder))
-            self.logger.debug("Status update sent to server")
+            logger.debug("Status update sent to server")
 
         except Exception as e:
-            self.logger.error(f"Error sending status update: {e}")
+            logger.error(f"Error sending status update: {e}")
 
     def _run_server_connection(self):
         """Main server connection loop"""
-        reconnect_delay = 5  # seconds
-        max_reconnect_delay = 60  # seconds
+        default_reconnect_delay = app_config['app']['server_reconnect_delay']
+        max_reconnect_delay = app_config['app']['server_max_reconnect_delay']
+
+        reconnect_delay = default_reconnect_delay
 
         while True:
             try:
-                # Authenticate with server
                 if not self.is_connected:
                     if self._authenticate_with_server():
-                        # Establish WebSocket connection
                         if self._connect_websocket():
                             self.is_connected = True
-                            reconnect_delay = 5  # Reset delay on successful connection
-                            self.logger.info("Successfully connected to server")
+                            reconnect_delay = default_reconnect_delay
+                            logger.info("Successfully connected to server")
                         else:
-                            self.logger.error(
+                            logger.error(
                                 "Failed to establish WebSocket connection"
                             )
                     else:
-                        self.logger.error("Failed to authenticate with server")
+                        logger.error("Failed to authenticate with server")
 
                 # Handle WebSocket messages
                 if self.is_connected and self.websocket_connection:
@@ -303,11 +267,11 @@ class UserAutomationManager:
                         # Timeout is expected for non-blocking receive
                         pass
                     except websocket.WebSocketConnectionClosedException:
-                        self.logger.warning("WebSocket connection closed by server")
+                        logger.warning("WebSocket connection closed by server")
                         self.is_connected = False
                         self.websocket_connection = None
                     except Exception as e:
-                        self.logger.error(f"Error in WebSocket communication: {e}")
+                        logger.error(f"Error in WebSocket communication: {e}")
                         self.is_connected = False
                         self.websocket_connection = None
 
@@ -315,21 +279,20 @@ class UserAutomationManager:
                 if self.is_connected:
                     self._send_status_update()
 
-                # If not connected, wait before retry
                 if not self.is_connected:
-                    self.logger.info(
+                    logger.info(
                         f"Retrying connection in {reconnect_delay} seconds..."
                     )
                     time.sleep(reconnect_delay)
                     reconnect_delay = min(reconnect_delay * 2, max_reconnect_delay)
                 else:
-                    time.sleep(10)  # Status update interval
+                    time.sleep(10)
 
             except KeyboardInterrupt:
-                self.logger.info("Server connection thread interrupted")
+                logger.info("Server connection thread interrupted")
                 break
             except Exception as e:
-                self.logger.error(f"Unexpected error in server connection: {e}")
+                logger.error(f"Unexpected error in server connection: {e}")
                 self.is_connected = False
                 time.sleep(reconnect_delay)
 
@@ -347,7 +310,7 @@ class UserAutomationManager:
                     # Only reload if behaviour manager has this method
                     if hasattr(self.behaviour_manager, 'load_behaviour_queue'):
                         self.behaviour_manager.load_behaviour_queue()
-                    self.logger.info("Configuration changed - behaviour manager reloaded")
+                    logger.info("Configuration changed - behaviour manager reloaded")
 
                 # Run next behaviour if cycle is running and no behaviour is currently active
                 if (
@@ -359,25 +322,25 @@ class UserAutomationManager:
                 time.sleep(1)
 
             except Exception as e:
-                self.logger.error(f"Error in behaviour cycle: {e}")
+                logger.error(f"Error in behaviour cycle: {e}")
                 time.sleep(5)  # Wait before retrying
 
     def start(self):
         """Start both behaviour cycle and server connection threads"""
-        self.logger.info("Starting User Automation Manager")
+        logger.info("Starting User Automation Manager")
         self.behaviour_cycle_thread.start()
         self.server_connection_thread.start()
 
     def stop(self):
         """Stop the manager and close connections"""
-        self.logger.info("Stopping User Automation Manager")
+        logger.info("Stopping User Automation Manager")
         self.idle_cycle_status = IdleCycleStatus.STOPPED
 
         if self.websocket_connection:
             try:
                 self.websocket_connection.close()
-            except:
-                pass
+            except Exception:
+                logging.error("Error closing WebSocket connection")
 
         self.is_connected = False
 
