@@ -8,7 +8,7 @@
       "args": [
         "${workspaceFolder}/.vscode/start_debug_server.sh",
         "${workspaceFolder}/env/bin/python",
-        "${file}"
+        "${workspaceFolder}/main.py"
       ],
       "presentation": {
         "panel": "shared",
