@@ -9,7 +9,7 @@ from typing import Optional
 import requests
 import websocket
 
-from app_config import AppConfig, app_config, save_app_config
+from app_config import AppConfig, app_config, automation_config, save_app_config
 from behaviour_manager import BehaviourManager
 from config_handler import save_config
 from json_encoder import EnumEncoder
@@ -58,8 +58,8 @@ class UserAutomationManager:
     def _authenticate_with_server(self) -> bool:
         """Authenticate with the server and get access token"""
         try:
-            username = app_config["behaviour"]["general"]["user"]["email"]
-            password = app_config["behaviour"]["general"]["user"]["password"]
+            username = app_config["automation"]["general"]["user"]["email"]
+            password = automation_config["general"]["user"]["password"]
             hostname = socket.gethostname()
 
             if not username or not password:

@@ -44,7 +44,7 @@ class WorkEmails(TypedDict):
     email_receivers: list[str]
 
 
-class TaskConfigs(TypedDict):
+class BehavioursConfigs(TypedDict):
     procrastination: Procrastination
     work_emails: WorkEmails
     attack_phishing: AttackPhishing
@@ -53,7 +53,7 @@ class TaskConfigs(TypedDict):
 class AutomationConfig(TypedDict):
     general: General
     idle_cycle: IdleCycle
-    tasks: TaskConfigs
+    behaviours: BehavioursConfigs
 
 
 class App(TypedDict):

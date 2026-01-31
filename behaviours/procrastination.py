@@ -3,7 +3,7 @@ import time
 import random
 from datetime import datetime
 
-from app_config import app_config
+from app_config import automation_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
@@ -48,8 +48,8 @@ class BehaviourProcrastination(BaseBehaviour):
         super().__init__(cleanup_manager)
         
         if cleanup_manager is not None:
-            self.user = app_config["behaviour"]["general"]["user"]
-            self.behaviour_cfg = app_config["behaviour"]["behaviours"]["procrastination"]
+            self.user = automation_config["general"]["user"]
+            self.behaviour_cfg = automation_config["behaviours"]["procrastination"]
         else:
             self.user = None
             self.behaviour_cfg = None

@@ -1,7 +1,7 @@
 import platform
 import time
 
-from app_config import app_config
+from app_config import automation_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
@@ -26,8 +26,8 @@ class BehaviourWorkOrganizationWeb(BaseBehaviour):
         super().__init__(cleanup_manager)
         
         if cleanup_manager is not None:
-            self.user = app_config["behaviour"]["general"]["user"]
-            self.behaviour_general = app_config["behaviour"]["general"]
+            self.user = automation_config["general"]["user"]
+            self.behaviour_general = automation_config["general"]
         else:
             self.user = None
             self.behaviour_general = None

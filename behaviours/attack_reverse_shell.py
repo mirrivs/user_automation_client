@@ -1,5 +1,4 @@
 import os
-import platform
 import time
 import sys
 import pyautogui as pag
@@ -12,7 +11,7 @@ sys.path.append(behaviour_dir)
 top_dir = os.path.join(behaviour_dir, "..")
 sys.path.append(top_dir)
 
-from app_config import app_config
+from app_config import app_config, automation_config
 from app_logger import app_logger
 
 from utils.selenium_utils import (
@@ -44,7 +43,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
         
         if cleanup_manager is not None:
             self.landscape_id = int(app_config["app"]["landscape"])
-            self.behaviour_cfg = app_config["behaviour"]
+            self.behaviour_cfg = automation_config
             self.user = self.behaviour_cfg["general"]["user"]
             self.attack_reverse_shell_cfg = self.behaviour_cfg["attack_reverse_shell"]
             self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"

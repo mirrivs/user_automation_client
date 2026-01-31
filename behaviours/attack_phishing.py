@@ -34,7 +34,7 @@ class BehaviourAttackPhishing(BaseBehaviour):
             self.mail_client = self.general_cfg["mail_client"]
             self.user = self.general_cfg["user"]
             # Config is REQUIRED for attack_phishing - needs malicious_email_subject
-            self.behaviour_cfg = get_behaviour_cfg("attack_phishing", app_config, required=True)
+            self.behaviour_cfg = get_behaviour_cfg(self.id, app_config, required=True)
         else:
             self.general_cfg = None
             self.mail_client = None

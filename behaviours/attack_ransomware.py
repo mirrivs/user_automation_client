@@ -2,7 +2,7 @@ import platform
 import time
 import pyautogui as pag
 
-from app_config import app_config
+from app_config import app_config, automation_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
@@ -32,9 +32,9 @@ class BehaviourAttackRansomware(BaseBehaviour):
         
         if cleanup_manager is not None:
             self.landscape_id = int(app_config["app"]["landscape"])
-            self.user = app_config["behaviour"]["general"]["user"]
-            self.behaviour_general = app_config["behaviour"]
-            self.behaviour_cfg = app_config["behaviour"]["attack_ransomware"]
+            self.user = automation_config["general"]["user"]
+            self.behaviour_general = automation_config
+            self.behaviour_cfg = automation_config["attack_ransomware"]
             self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
         else:
             self.landscape_id = None

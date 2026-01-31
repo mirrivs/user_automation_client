@@ -10,7 +10,7 @@ sys.path.append(TOP_DIR)
 
 TEMPLATES_DIR = os.path.join(BEHAVIOUR_DIR, "templates")
 
-from app_config import app_config
+from app_config import automation_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
@@ -36,7 +36,7 @@ class BehaviourWorkWord(BaseBehaviour):
         super().__init__(cleanup_manager)
         
         if cleanup_manager is not None:
-            self.user = app_config["behaviour"]["general"]["user"]
+            self.user = automation_config["general"]["user"]
         else:
             self.user = None
 

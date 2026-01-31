@@ -1,0 +1,52 @@
+app:
+  landscape: "8"
+  user_automation_server_http: "http://192.168.7.2:8080"
+  user_automation_server_websocket: "ws://192.168.7.2:8080"
+  server_reconnect_delay: 5
+  server_max_reconnect_delay: 60
+
+automation:
+  general:
+    mail_client: "owa"
+    is_conversation_starter: False
+    organization_mail_server_url: "http://mail.domain.internal"
+    organization_web_url: "https://www.domain.internal"
+    archive_path: C:/Archive
+    user:
+      email: "userplaceholder"
+      password: "passwordplaceholder"
+  idle_cycle:
+    procrastination_chance: -1.0
+  behaviours:
+    procrastination:
+      max_duration: 66
+      min_duration: 42
+      preference: 0.5
+
+logging:
+  version: 1
+  formatters:
+    simple:
+      datefmt: "%Y-%m-%d %H:%M:%S"
+      format: "%(asctime)s %(levelname)s: %(message)s"
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: INFO
+      formatter: simple
+      stream: ext://sys.stdout
+    file:
+      class: logging.handlers.RotatingFileHandler
+      level: INFO
+      formatter: simple
+      filename: "C:/logs/user_automation_client/automation_logs.log"
+      maxBytes: 4153344
+      backupCount: 7
+  loggers:
+    autoconfig:
+      level: INFO
+      handlers: [console, file]
+      propagate: false
+  root:
+    level: INFO
+    handlers: [console]

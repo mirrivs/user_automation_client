@@ -10,7 +10,7 @@ TEMPLATES_DIR = os.path.join(BEHAVIOUR_DIR, "templates")
 LINUX_FILE = os.path.join(TEMPLATES_DIR, "c_program.txt")
 WINDOWS_FILE = os.path.join(TEMPLATES_DIR, "ps_program.txt")
 
-from app_config import app_config
+from app_config import app_config, automation_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
@@ -35,7 +35,7 @@ class BehaviourWorkDeveloper(BaseBehaviour):
         self.os_type = platform.system()
         
         if cleanup_manager is not None:
-            self.user = app_config["behaviour"]["general"]["user"]
+            self.user = automation_config["general"]["user"]
             self.filename = random.choice(["super_complex_code", "hello_world", "iam_working"])
         else:
             self.user = None

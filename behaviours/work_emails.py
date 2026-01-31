@@ -33,7 +33,7 @@ class BehaviourWorkEmails(BaseBehaviour):
             self.mail_client = self.general_cfg["mail_client"]
             self.user = self.general_cfg["user"]
             # Config is optional for work_emails - uses general config
-            self.behaviour_cfg = get_behaviour_cfg("work_emails", app_config)
+            self.behaviour_cfg = get_behaviour_cfg("work_emails", {})
             self.email_manager = EmailManager()
         else:
             self.general_cfg = None
