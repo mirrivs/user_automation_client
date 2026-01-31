@@ -34,5 +34,8 @@ ENV/
 env.bak/
 venv.bak/
 
+# Config
+config.yml
+
 dist/
 build/
