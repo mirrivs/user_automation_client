@@ -6,6 +6,7 @@ import os
 
 from resource_path import resource_path
 from user_automation_manager import UserAutomationManager
+from behaviours.utils.behaviour import BaseBehaviour
 
 
 class PopupWindow(QWidget):
@@ -55,12 +56,10 @@ class PopupWindow(QWidget):
         svg_renderer.render(painter)
         painter.end()
 
-        # Set the icon
         icon = QtGui.QIcon(QtGui.QPixmap.fromImage(img))
         close_btn = QPushButton()
         close_btn.setIcon(icon)
 
-        # Set common button properties
         close_btn.setIconSize(QSize(16, 16))
         close_btn.setToolTip("Close")
         close_btn.clicked.connect(self.hide)
@@ -92,11 +91,9 @@ class PopupWindow(QWidget):
         all_scroll_widget = QWidget()
         all_behaviours_layout = QVBoxLayout(all_scroll_widget)
 
-        for (
-            behaviour_id,
-            behaviour,
-        ) in self.behaviour_manager.available_behaviours.items():
-            behaviour_btn = self._create_behaviour_button(behaviour_id, behaviour)
+        # Use behaviour instances directly
+        for behaviour_id, behaviour in self.behaviour_manager.available_behaviours.items():
+            behaviour_btn = self._create_behaviour_button(behaviour)
             all_behaviours_layout.addWidget(behaviour_btn)
 
         all_behaviours_layout.addStretch(1)
@@ -125,8 +122,9 @@ class PopupWindow(QWidget):
             category_scroll_widget = QWidget()
             category_behaviours_layout = QVBoxLayout(category_scroll_widget)
 
-            for behaviour_id, behaviour in behaviours.items():
-                behaviour_btn = self._create_behaviour_button(behaviour_id, behaviour)
+            # behaviours is now a list of BaseBehaviour instances
+            for behaviour in behaviours:
+                behaviour_btn = self._create_behaviour_button(behaviour)
                 category_behaviours_layout.addWidget(behaviour_btn)
 
             category_behaviours_layout.addStretch(1)
@@ -191,12 +189,12 @@ class PopupWindow(QWidget):
 
         content_layout.addLayout(control_layout)
 
-    def _create_behaviour_button(self, behaviour_id: str, behaviour: dict) -> QPushButton:
+    def _create_behaviour_button(self, behaviour: BaseBehaviour) -> QPushButton:
         """Helper method to create a behaviour button with consistent styling"""
-        # Use display_name if available, otherwise fall back to name
-        display_text = behaviour.get("display_name", behaviour["name"])
+        # Use display_name from the behaviour instance
+        display_text = behaviour.display_name
         behaviour_btn = QPushButton(display_text)
-        behaviour_btn.setProperty("behaviour_id", behaviour_id)
+        behaviour_btn.setProperty("behaviour_id", behaviour.id)
         behaviour_btn.clicked.connect(self.run_behaviour)
         behaviour_btn.setStyleSheet(
             """
@@ -273,11 +271,9 @@ class PopupWindow(QWidget):
             current_behaviour = self.behaviour_manager.current_behaviour
             self.status_label.setText(f"Behaviour is running")
             self.status_label.setStyleSheet("font-size: 11px; color: #008800;")
-            # Use display_name if available, otherwise fall back to name
-            display_name = current_behaviour.get('display_name', current_behaviour['name'])
-            self.current_behaviour_label.setText(
-                f"Current: {display_name}"
-            )
+            # current_behaviour is now a BaseBehaviour instance
+            display_name = current_behaviour.display_name if current_behaviour else "Unknown"
+            self.current_behaviour_label.setText(f"Current: {display_name}")
             self.current_behaviour_label.setStyleSheet(
                 "font-size: 11px; color: #008800;"
             )

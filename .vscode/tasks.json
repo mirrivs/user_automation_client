@@ -18,11 +18,9 @@
       },
       "isBackground": true,
       "problemMatcher": {
+        "owner": "python-debug",
         "pattern": {
-          "regexp": "^Ready to attach debugger$",
-          "file": 1,
-          "line": 1,
-          "column": 1,
+          "regexp": "^ERROR: (.*)$",
           "message": 1
         },
         "background": {
@@ -39,9 +37,9 @@
       "args": [
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
-        "-File", "${workspaceFolder}/start_debug_server.ps1",
+        "-File", "${workspaceFolder}/.vscode/start_debug_server.ps1",
         "-pythonPath", "${workspaceFolder}/env/Scripts/python.exe",
-        "-scriptPath", "${file}"
+        "-scriptPath", "${workspaceFolder}/main.py"
       ],
       "presentation": {
         "panel": "shared",
@@ -51,11 +49,9 @@
       },
       "isBackground": true,
       "problemMatcher": {
+        "owner": "python-debug",
         "pattern": {
-          "regexp": "^Ready to attach debugger$",
-          "file": 1,
-          "line": 1,
-          "column": 1,
+          "regexp": "^ERROR: (.*)$",
           "message": 1
         },
         "background": {

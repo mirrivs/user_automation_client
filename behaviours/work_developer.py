@@ -3,47 +3,48 @@ import random
 import sys
 import os
 import time
-import pyautogui as pag
 
-from app_config import app_config
-from app_logger import app_logger
-from cleanup_manager import CleanupManager
-
-# Utilities imports
-from utils.behaviour_utils import BehaviourThread
-
-# Scripts imports
-from scripts_pyautogui.os_utils import os_utils
-
-# Append to path for custom imports
 BEHAVIOUR_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BEHAVIOUR_DIR, "templates")
 
 LINUX_FILE = os.path.join(TEMPLATES_DIR, "c_program.txt")
 WINDOWS_FILE = os.path.join(TEMPLATES_DIR, "ps_program.txt")
 
+from app_config import app_config
+from app_logger import app_logger
+from cleanup_manager import CleanupManager
 
-class BehaviourWorkDeveloper(BehaviourThread):
+from behaviours.utils.behaviour import BaseBehaviour, BehaviourCategory
+
+from scripts_pyautogui.os_utils import os_utils
+
+
+class BehaviourWorkDeveloper(BaseBehaviour):
     """
     Behaviour for simulating developer work by writing and running code.
-
-    This class can be directly instantiated and started from the behaviour manager.
     """
 
-    # Behaviour metadata
-    name = "work_developer"
+    # Class-level metadata
+    id = "work_developer"
     display_name = "Developer Work"
-    category = "IDLE"
+    category = BehaviourCategory.IDLE
     description = "Simulates developer activities"
 
-    def __init__(self, cleanup_manager: CleanupManager):
+    def __init__(self, cleanup_manager: CleanupManager = None):
         super().__init__(cleanup_manager)
-        self.user = app_config["behaviour"]["general"]["user"]
         self.os_type = platform.system()
-        self.filename = random.choice(["super_complex_code", "hello_world", "iam_working"])
+        
+        if cleanup_manager is not None:
+            self.user = app_config["behaviour"]["general"]["user"]
+            self.filename = random.choice(["super_complex_code", "hello_world", "iam_working"])
+        else:
+            self.user = None
+            self.filename = None
+
+    def _is_available(self) -> bool:
+        return False
 
     def run_behaviour(self):
-        """Main behaviour execution - can be interrupted at any time"""
         app_logger.info("Starting work_developer behaviour")
 
         os_utils.open_terminal()

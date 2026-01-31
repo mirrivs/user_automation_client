@@ -1,66 +1,66 @@
-import atexit
 import os
 import platform
-import signal
 import time
 import sys
 import pyautogui as pag
 
 from cleanup_manager import CleanupManager
 
-# Append to path for custom imports
 behaviour_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(behaviour_dir)
 
 top_dir = os.path.join(behaviour_dir, "..")
 sys.path.append(top_dir)
 
-# Custom imports
 from app_config import app_config
 from app_logger import app_logger
 
-# Utilities imports
 from utils.selenium_utils import (
     EdgeSeleniumController,
     EmailClientType,
     FirefoxSeleniumController,
 )
-from utils.behaviour_utils import BehaviourThread
+from utils.behaviour import BaseBehaviour, BehaviourCategory
 
-# Scripts imports
 from scripts_pyautogui.win_utils import win_utils
 from scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 
-# Selenium imports
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-class BehaviourAttackReverseShell(BehaviourThread):
+class BehaviourAttackReverseShell(BaseBehaviour):
     """
     Behaviour for downloading and opening malicious reverse shell attachment from email.
-
-    This class can be directly instantiated and started from the behaviour manager.
     """
 
-    # Behaviour metadata
-    name = "attack_reverse_shell"
+    # Class-level metadata
+    id = "attack_reverse_shell"
     display_name = "Reverse Shell"
-    category = "ATTACK"
-    description = "Reverse shell attack"
+    category = BehaviourCategory.ATTACK
+    description = "Reverse shell attack - downloads and opens malicious attachment from email"
 
-    def __init__(self, cleanup_manager: CleanupManager):
+    def __init__(self, cleanup_manager: CleanupManager = None):
         super().__init__(cleanup_manager)
-        self.os_type = platform.system()
-        self.landscape_id = int(app_config["app"]["landscape"])
-        self.behaviour_cfg = app_config["behaviour"]
-        self.user = self.behaviour_cfg["general"]["user"]
-        self.attack_reverse_shell_cfg = self.behaviour_cfg["attack_reverse_shell"]
-        self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
+        
+        if cleanup_manager is not None:
+            self.landscape_id = int(app_config["app"]["landscape"])
+            self.behaviour_cfg = app_config["behaviour"]
+            self.user = self.behaviour_cfg["general"]["user"]
+            self.attack_reverse_shell_cfg = self.behaviour_cfg["attack_reverse_shell"]
+            self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
+        else:
+            self.landscape_id = None
+            self.behaviour_cfg = None
+            self.user = None
+            self.attack_reverse_shell_cfg = None
+            self.email_client_type = None
+            
         self.selenium_controller = None
 
+    def _is_available(self) -> bool:
+        return self.os_type in ["Windows", "Linux"]
+
     def run_behaviour(self):
-        """Main behaviour execution - can be interrupted at any time"""
         app_logger.info("Starting attack_reverse_shell behaviour")
 
         self.selenium_controller = (
@@ -69,16 +69,13 @@ class BehaviourAttackReverseShell(BehaviourThread):
             else EdgeSeleniumController()
         )
 
-        # Register selenium controller with cleanup manager
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
 
         self.selenium_controller.maximize_driver_window()
-
         time.sleep(4)
 
         BrowserUtils.search_by_url(self.behaviour_cfg["general"]["organization_mail_server_url"])
-
         time.sleep(4)
 
         self.selenium_controller.email_client_login(self.user["email"], self.user["password"])
@@ -90,7 +87,6 @@ class BehaviourAttackReverseShell(BehaviourThread):
 
         unread_emails = self.selenium_controller.get_unread_emails()
 
-        # Read and reply to received emails from email conversations
         for email in unread_emails:
             subject_link = None
             if self.email_client_type == "owa":

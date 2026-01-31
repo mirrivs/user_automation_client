@@ -24,7 +24,7 @@ class SystemTrayApp:
 
         try:
             stylesheet_path = resource_path("static/styles.qss")
-            app_logger.info(f"Loading stylesheet from: {stylesheet_path}")
+            app_logger.debug(f"Loading stylesheet from: {stylesheet_path}")
             with open(stylesheet_path, "r") as f:
                 styles = f.read()
                 self.app.setStyleSheet(styles)
@@ -32,15 +32,15 @@ class SystemTrayApp:
             app_logger.error(f"Error loading stylesheet: {str(e)}")
 
         # Log platform and environment info
-        app_logger.info(f"Platform: {platform.system()}")
-        app_logger.info(f"Desktop environment: {os.environ.get('XDG_CURRENT_DESKTOP', 'Unknown')}")
-        app_logger.info(f"Session type: {os.environ.get('XDG_SESSION_TYPE', 'Unknown')}")
-        app_logger.info(f"Wayland display: {os.environ.get('WAYLAND_DISPLAY', 'Not set')}")
+        app_logger.debug(f"Platform: {platform.system()}")
+        app_logger.debug(f"Desktop environment: {os.environ.get('XDG_CURRENT_DESKTOP', 'Unknown')}")
+        app_logger.debug(f"Session type: {os.environ.get('XDG_SESSION_TYPE', 'Unknown')}")
+        app_logger.debug(f"Wayland display: {os.environ.get('WAYLAND_DISPLAY', 'Not set')}")
 
         # Initialize Qt system tray icon
         self.tray = None
         self.init_retry_count = 0
-        app_logger.info("Using QSystemTrayIcon for system tray")
+        app_logger.debug("Using QSystemTrayIcon for system tray")
         self.init_system_tray()
 
         # Status timer
@@ -51,7 +51,7 @@ class SystemTrayApp:
     def init_system_tray(self):
         """Initialize Qt system tray with retry logic"""
 
-        app_logger.info(f"Attempting Qt tray init (attempt #{self.init_retry_count + 1})")
+        app_logger.debug(f"Attempting Qt tray init (attempt #{self.init_retry_count + 1})")
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self.init_retry_count += 1
@@ -63,7 +63,7 @@ class SystemTrayApp:
                 self.popup.show()
             return
 
-        app_logger.info("Qt system tray is available!")
+        app_logger.debug("Qt system tray is available!")
 
         # Load icon - try multiple sizes for best display
         parent_dir = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +74,7 @@ class SystemTrayApp:
             icon_path = os.path.join(parent_dir, "static", "logos", f"user_automation_logo_{size}.png")
             if os.path.exists(icon_path):
                 icon.addFile(icon_path, QSize(size, size))
-                app_logger.info(f"Added icon size: {size}x{size}")
+                app_logger.debug(f"Added icon size: {size}x{size}")
             elif size == 32:  # Fallback to the one we know exists
                 icon_path_32 = os.path.join(parent_dir, "static", "logos", "user_automation_logo_32.png")
                 if os.path.exists(icon_path_32):
@@ -121,11 +121,11 @@ class SystemTrayApp:
 
             self.tray.show()
 
-            app_logger.info(f"Qt tray icon created. Visible: {self.tray.isVisible()}")
+            app_logger.debug(f"Qt tray icon created. Visible: {self.tray.isVisible()}")
             if is_ubuntu:
                 app_logger.warning("Ubuntu detected: Left-click on tray icon may not work due to AppIndicator limitations. Use right-click menu instead.")
             else:
-                app_logger.info("Tray icon with context menu - left-click should toggle popup")
+                app_logger.debug("Tray icon with context menu - left-click should toggle popup")
 
         except Exception as e:
             app_logger.error(f"Error creating Qt system tray icon: {str(e)}")
@@ -133,7 +133,7 @@ class SystemTrayApp:
 
     def on_tray_activated(self, reason):
         """Handle Qt system tray activation - toggle popup on left/middle/double click"""
-        app_logger.info(f"Qt tray activated with reason: {reason} ({reason.name})")
+        app_logger.debug(f"Qt tray activated with reason: {reason} ({reason.name})")
 
         try:
             # Toggle popup on left-click, middle-click, and double-click

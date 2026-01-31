@@ -10,14 +10,11 @@ import requests
 import websocket
 
 from app_config import AppConfig, app_config, save_app_config
-from behaviour_manager import BehaviourManager, get_available_behaviours_from_mapping
+from behaviour_manager import BehaviourManager
 from config_handler import save_config
 from json_encoder import EnumEncoder
 
 logger = logging.getLogger(__name__)
-
-# Get available behaviours from the behaviour classes themselves
-available_behaviours = get_available_behaviours_from_mapping()
 
 
 class IdleCycleStatus(Enum):
@@ -36,7 +33,8 @@ class UserAutomationManager:
         # Use a single configuration source
         self.config: AppConfig = config
 
-        self.behaviour_manager = BehaviourManager(available_behaviours)
+        # BehaviourManager automatically discovers available behaviours
+        self.behaviour_manager = BehaviourManager()
 
         self.behaviour_cycle_thread = threading.Thread(
             target=self._run_behaviour_cycle, name="Behaviour cycle thread", daemon=True
@@ -217,10 +215,19 @@ class UserAutomationManager:
             if not self.websocket_connection:
                 return
 
+            # Serialize current_behaviour - it's now a BaseBehaviour instance
+            current_behaviour_data = None
+            if self.behaviour_manager.current_behaviour:
+                current_behaviour_data = {
+                    "id": self.behaviour_manager.current_behaviour.id,
+                    "display_name": self.behaviour_manager.current_behaviour.display_name,
+                    "category": self.behaviour_manager.current_behaviour.category.value,
+                }
+
             status_data = {
                 "type": "status_update",
                 "hostname": socket.gethostname(),
-                "current_behaviour": self.behaviour_manager.current_behaviour,
+                "current_behaviour": current_behaviour_data,
                 "idle_cycle_status": self.idle_cycle_status.value,
                 "timestamp": time.time(),
             }

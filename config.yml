@@ -1,58 +1,52 @@
 app:
-  landscape: '8'
-  server_max_reconnect_delay: 60
+  landscape: "8"
+  user_automation_server_http: "http://192.168.7.2:8080"
+  user_automation_server_websocket: "ws://192.168.7.2:8080"
   server_reconnect_delay: 5
-  user_automation_server_http: http://192.168.7.2:8080
-  user_automation_server_websocket: ws://192.168.7.2:8080
-behaviour:
-  behaviours:
-    attack_phishing: null
-    procrastination:
-      duration_max: null
-      duration_min: null
-      max_duration: 66
-      min_duration: 42
-      preference:
-        kittens: 1.0
-        youtube: 1.0
-    work_emails: null
+  server_max_reconnect_delay: 60
+
+automation:
   general:
+    mail_client: "owa"
+    is_conversation_starter: False
+    organization_mail_server_url: "http://192.168.7.22/roundcube"
+    organization_web_url: "https://www.coolbank.internal"
     archive_path: C:/Archive
-    is_conversation_starter: false
-    organization_mail_server_url: http://192.168.7.22/roundcube
-    organization_web_url: https://www.coolbank.eu
     user:
-      email: slavomir.markus@coolbank.eu
-      password: BrokenAroma68
+      email: "userplaceholder"
+      password: "passwordplaceholder"
   idle_cycle:
     procrastination_chance: -1.0
+  tasks:
+    procrastination:
+      max_duration: 66
+      min_duration: 42
+      preference: 0.5
+
 logging:
+  version: 1
   formatters:
     simple:
-      datefmt: '%Y-%m-%d %H:%M:%S'
-      format: '%(asctime)s %(levelname)s: %(message)s'
+      datefmt: "%Y-%m-%d %H:%M:%S"
+      format: "%(asctime)s %(levelname)s: %(message)s"
   handlers:
     console:
       class: logging.StreamHandler
-      formatter: simple
       level: INFO
+      formatter: simple
       stream: ext://sys.stdout
     file:
-      backupCount: 7
       class: logging.handlers.RotatingFileHandler
-      filename: /var/log/user_automation_client/automation_logs.log
-      formatter: simple
       level: INFO
+      formatter: simple
+      filename: "C:/logs/user_automation_client/automation_logs.log"
       maxBytes: 4153344
+      backupCount: 7
   loggers:
     autoconfig:
-      handlers:
-      - console
-      - file
       level: INFO
+      handlers: [console, file]
       propagate: false
   root:
-    handlers:
-    - console
     level: INFO
-  version: 1
+    handlers: [console]

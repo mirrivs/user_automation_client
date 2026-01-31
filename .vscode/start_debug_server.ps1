@@ -3,42 +3,65 @@ param (
     [string]$scriptPath
 )
 
-# Find console session ID
-$sessionInfo = query session | Where-Object { $_ -match 'console' -or $_ -match '^\s*\d+\s+console\s+' }
-if ($sessionInfo) {
-    $sessionId = $sessionInfo -split '\s+' | Where-Object { $_ -match '^\d+$' } | Select-Object -First 1
-    
-    if ($sessionId) {
-        Write-Host "Found console session ID: $sessionId"
-        
-        $port = 5678
-        
-        Get-ScheduledTask | Where-Object {$_.TaskName -like "VSCodeDebug*"} | Unregister-ScheduledTask -Confirm:$false -ErrorAction SilentlyContinue
-        
-        $pythonCommand = "$pythonPath -m debugpy --listen 0.0.0.0:$port --wait-for-client $scriptPath"
-        $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-Command `"$pythonCommand`""
-        $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(2)
-        $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-        $taskName = "VSCodeDebug_" + (Get-Random)
-        
-        Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Force
-        Write-Host "Running debug server in session $sessionId via task $taskName on port $port"
-        Start-ScheduledTask -TaskName $taskName
-        
-        Start-Sleep -Seconds 3
-        Write-Host "Task $taskName will be removed when debugging is finished"
-        
-        # Register a cleanup task to run when VS Code exits
-        $cleanupCommand = "Unregister-ScheduledTask -TaskName $taskName -Confirm:`$false"
-        $cleanupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-Command `"$cleanupCommand`""
-        $cleanupTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddHours(1)
-        $cleanupTaskName = "Cleanup_$taskName"
-        Register-ScheduledTask -TaskName $cleanupTaskName -Action $cleanupAction -Trigger $cleanupTrigger -Settings $settings -Force
-    } else {
-        Write-Host "Could not parse session ID from: $sessionInfo"
-        exit 1
-    }
-} else {
-    Write-Host "No console session found"
+Write-Host "Starting debug server"
+
+$port = 5678
+$workDir = Split-Path $scriptPath
+$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+$shortUser = $currentUser -replace '.*\\', ''
+
+# Check if current user has an active session
+$quserOutput = quser 2>&1 | Out-String
+if (-not ($quserOutput -match "$shortUser.*Active")) {
+    Write-Host ""
+    Write-Host "ERROR: User '$currentUser' does not have an active desktop session."
+    Write-Host ""
+    Write-Host "Current sessions:"
+    Write-Host $quserOutput
+    Write-Host ""
+    Write-Host "To fix: RDP/login as '$currentUser' or run as the user with Active session"
     exit 1
 }
+
+# Validate paths
+if (-not (Test-Path $pythonPath)) {
+    Write-Host "ERROR: Python not found at $pythonPath"
+    exit 1
+}
+if (-not (Test-Path $scriptPath)) {
+    Write-Host "ERROR: Script not found at $scriptPath"
+    exit 1
+}
+
+Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | ForEach-Object {
+    Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+}
+Start-Sleep -Seconds 1
+
+$taskName = "DebugPythonGUI_$port"
+
+Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+
+$action = New-ScheduledTaskAction -Execute $pythonPath `
+    -Argument "-m debugpy --listen 0.0.0.0:$port --wait-for-client `"$scriptPath`"" `
+    -WorkingDirectory $workDir
+
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive
+
+Register-ScheduledTask -TaskName $taskName -Action $action -Settings $settings -Principal $principal | Out-Null
+Start-ScheduledTask -TaskName $taskName
+
+Write-Host "Waiting for debug server..."
+
+for ($i = 0; $i -lt 20; $i++) {
+    Start-Sleep -Seconds 1
+    if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {
+        Write-Host "Debug server listening on port $port"
+        Write-Host "Ready to attach debugger"
+        exit 0
+    }
+}
+
+Write-Host "ERROR: Debug server failed to start"
+exit 1

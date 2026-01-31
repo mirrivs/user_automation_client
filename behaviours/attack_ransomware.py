@@ -2,50 +2,53 @@ import platform
 import time
 import pyautogui as pag
 
-
 from app_config import app_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
-# Utilities imports
 from utils.selenium_utils import EdgeSeleniumController, EmailClientType, FirefoxSeleniumController
-from utils.behaviour_utils import BehaviourThread
+from utils.behaviour import BaseBehaviour, BehaviourCategory
 
-# Scripts imports
 from scripts_pyautogui.os_utils import os_utils
 from scripts_pyautogui.browser_utils.browser_utils import BrowserUtils, EdgeUtils
 from scripts_pyautogui.win_utils import win_utils
 
-# Selenium imports
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-class BehaviourAttackRansomware(BehaviourThread):
+class BehaviourAttackRansomware(BaseBehaviour):
     """
     Behaviour for downloading and opening malicious email attachment.
-
-    This class can be directly instantiated and started from the behaviour manager.
     """
 
-    # Behaviour metadata
-    name = "attack_ransomware"
+    # Class-level metadata
+    id = "attack_ransomware"
     display_name = "Ransomware"
-    category = "ATTACK"
-    description = "Ransomware attack"
+    category = BehaviourCategory.ATTACK
+    description = "Ransomware attack - downloads and opens malicious email attachment"
 
-    def __init__(self, cleanup_manager: CleanupManager):
+    def __init__(self, cleanup_manager: CleanupManager = None):
         super().__init__(cleanup_manager)
-        self.os_type = platform.system()
-        self.landscape_id = int(app_config["app"]["landscape"])
-        self.user = app_config["behaviour"]["general"]["user"]
-        self.behaviour_general = app_config["behaviour"]
-        self.behaviour_cfg = app_config["behaviour"]["attack_ransomware"]
-        self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
+        
+        if cleanup_manager is not None:
+            self.landscape_id = int(app_config["app"]["landscape"])
+            self.user = app_config["behaviour"]["general"]["user"]
+            self.behaviour_general = app_config["behaviour"]
+            self.behaviour_cfg = app_config["behaviour"]["attack_ransomware"]
+            self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
+        else:
+            self.landscape_id = None
+            self.user = None
+            self.behaviour_general = None
+            self.behaviour_cfg = None
+            self.email_client_type = None
+            
         self.selenium_controller = None
 
+    def _is_available(self) -> bool:
+        return self.os_type in ["Windows", "Linux"]
+
     def run_behaviour(self):
-        """Main behaviour execution - can be interrupted at any time"""
         app_logger.info("Starting attack_ransomware behaviour")
 
         self.selenium_controller = (
@@ -54,16 +57,13 @@ class BehaviourAttackRansomware(BehaviourThread):
             else EdgeSeleniumController()
         )
 
-        # Register selenium controller with cleanup manager
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
 
         self.selenium_controller.maximize_driver_window()
-
         time.sleep(4)
 
         BrowserUtils.search_by_url(self.user["roundcube_url"])
-
         time.sleep(4)
 
         self.selenium_controller.email_client_login(self.user["email"], self.user["password"])

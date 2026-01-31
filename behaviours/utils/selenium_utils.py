@@ -28,7 +28,7 @@ top_dir = os.path.join(parent_dir, "..", "..")
 sys.path.append(top_dir)
 
 # Custom imports
-from behaviour_utils import BehaviourException
+from behaviour import BehaviourException
 from app_logger import app_logger
 
 EmailClientType = Literal["owa", "roundcube"] | None
