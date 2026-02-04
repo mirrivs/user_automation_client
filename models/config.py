@@ -1,16 +1,13 @@
-from enum import Enum
 from typing import TypedDict
 
-
-class MailClient(Enum):
-    OWA = "owa"
-    ROUNDCUBE = "roundcube"
-    O365 = "o365"
+from models.email_client import EmailClient
 
 
 class User(TypedDict):
-    email: str
-    password: str
+    domain_email: str
+    domain_password: str
+    o365_email: str
+    o365_password: str
 
 
 class IdleCycle(TypedDict):
@@ -18,7 +15,7 @@ class IdleCycle(TypedDict):
 
 
 class General(TypedDict):
-    mail_client: MailClient
+    mail_client: EmailClient
     user: User
     is_conversation_starter: bool
     organization_mail_server_url: str

@@ -1,11 +1,13 @@
 import platform
 import time
+from typing import Optional
 
 from app_config import app_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
-from utils.selenium_utils import getSeleniumController
+from models.email_client import EmailClient
+from utils.selenium_utils import SeleniumController, getSeleniumController
 from utils.email_manager import EmailManager
 from utils.behaviour import get_behaviour_cfg, BaseBehaviour, BehaviourCategory
 
@@ -30,27 +32,30 @@ class BehaviourWorkEmails(BaseBehaviour):
         
         if cleanup_manager is not None:
             self.general_cfg = app_config["automation"]["general"]
-            self.mail_client = self.general_cfg["mail_client"]
+            self.email_client = EmailClient(self.general_cfg["email_client"])
             self.user = self.general_cfg["user"]
             # Config is optional for work_emails - uses general config
             self.behaviour_cfg = get_behaviour_cfg("work_emails", {})
             self.email_manager = EmailManager()
         else:
             self.general_cfg = None
-            self.mail_client = None
+            self.email_client = None
             self.user = None
             self.behaviour_cfg = None
             self.email_manager = None
             
-        self.selenium_controller = None
+        self.selenium_controller: Optional[SeleniumController] = None
 
     def _is_available(self) -> bool:
         return platform.system() in ["Windows", "Linux", "Darwin"]
 
     def run_behaviour(self):
+        email = self.user["o365_email"] if self.email_client.type == EmailClient.O365 else self.user["email"]
+        password = self.user["o365_password"] if self.email_client.type == EmailClient.O365 else self.user["password"]
+
         app_logger.info("Starting work_emails behaviour")
 
-        self.selenium_controller = getSeleniumController(self.mail_client)
+        self.selenium_controller = getSeleniumController(self.email_client)
         email_client = self.selenium_controller.email_client
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
@@ -61,9 +66,9 @@ class BehaviourWorkEmails(BaseBehaviour):
 
         BrowserUtils.search_by_url(self.general_cfg["organization_mail_server_url"])
 
-        email_client.login(self.user["email"], self.user["password"])
+        email_client.login(email, password)
 
-        if email_client.type == "roundcube":
+        if email_client.type == EmailClient.ROUNDCUBE:
             self.selenium_controller.roundcube_set_language()
 
         time.sleep(4)
@@ -73,7 +78,7 @@ class BehaviourWorkEmails(BaseBehaviour):
         responded = False
         for email in unread_emails:
             subject_link = None
-            if email_client.type == "outlook":
+            if email_client.type == EmailClient.OWA:
                 subject_link = email.find_element(
                     By.XPATH, "//span[contains(@class, 'lvHighlightAllClass lvHighlightSubjectClass')]")
             else:
@@ -81,7 +86,7 @@ class BehaviourWorkEmails(BaseBehaviour):
 
             email_id = self.email_manager.get_email_id_by_subject(subject_link.text)
             if email_id:
-                if email_client.type == "outlook":
+                if email_client.type == EmailClient.OWA:
                     subject_link.click()
                 else:
                     email.click()
@@ -90,7 +95,7 @@ class BehaviourWorkEmails(BaseBehaviour):
 
                 reply = self.email_manager.get_email_response(email_id)
                 if reply is not None:
-                    sender_name = self.user["email"].split(".")[0].capitalize()
+                    sender_name = email.split(".")[0].capitalize()
                     email_client.reply_to_email(sender_name, reply["subject"], reply["email_body"])
                     responded = True
                 else:
@@ -103,7 +108,7 @@ class BehaviourWorkEmails(BaseBehaviour):
                 return
             
             email = self.email_manager.get_email_starter()
-            sender_name = self.user["email"].split(".")[0].capitalize()
+            sender_name = email.split(".")[0].capitalize()
             email_client.send_email(
                 sender_name, email_receivers, email["subject"], email["email_body"])
 

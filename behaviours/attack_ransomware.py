@@ -6,7 +6,8 @@ from app_config import app_config, automation_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
-from utils.selenium_utils import EdgeSeleniumController, EmailClientType, FirefoxSeleniumController
+from models.email_client import EmailClient
+from utils.selenium_utils import EdgeSeleniumController, FirefoxSeleniumController
 from utils.behaviour import BaseBehaviour, BehaviourCategory
 
 from scripts_pyautogui.os_utils import os_utils
@@ -35,7 +36,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
             self.user = automation_config["general"]["user"]
             self.behaviour_general = automation_config
             self.behaviour_cfg = automation_config["attack_ransomware"]
-            self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
+            self.email_client_type: EmailClient = "owa" if self.landscape_id in [2] else "roundcube"
         else:
             self.landscape_id = None
             self.user = None
@@ -66,7 +67,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
         BrowserUtils.search_by_url(self.user["roundcube_url"])
         time.sleep(4)
 
-        self.selenium_controller.email_client_login(self.user["email"], self.user["password"])
+        self.selenium_controller.email_client_login(self.user["domain_email"], self.user["domain_password"])
 
         if self.email_client_type == "roundcube":
             self.selenium_controller.roundcube_set_language()

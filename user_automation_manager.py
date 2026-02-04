@@ -58,8 +58,8 @@ class UserAutomationManager:
     def _authenticate_with_server(self) -> bool:
         """Authenticate with the server and get access token"""
         try:
-            username = app_config["automation"]["general"]["user"]["email"]
-            password = automation_config["general"]["user"]["password"]
+            username = automation_config["general"]["user"]["domain_email"]
+            password = automation_config["general"]["user"]["domain_password"]
             hostname = socket.gethostname()
 
             if not username or not password:

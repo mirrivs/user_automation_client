@@ -6,6 +6,7 @@ from app_config import app_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
+from models.email_client import EmailClient
 from utils.selenium_utils import getSeleniumController
 from utils.behaviour import get_behaviour_cfg, BaseBehaviour, BehaviourCategory
 
@@ -31,13 +32,13 @@ class BehaviourAttackPhishing(BaseBehaviour):
         
         if cleanup_manager is not None:
             self.general_cfg = app_config["automation"]["general"]
-            self.mail_client = self.general_cfg["mail_client"]
+            self.email_client = EmailClient(self.general_cfg["email_client"])
             self.user = self.general_cfg["user"]
             # Config is REQUIRED for attack_phishing - needs malicious_email_subject
             self.behaviour_cfg = get_behaviour_cfg(self.id, app_config, required=True)
         else:
             self.general_cfg = None
-            self.mail_client = None
+            self.email_client = None
             self.user = None
             self.behaviour_cfg = None
             
@@ -49,7 +50,7 @@ class BehaviourAttackPhishing(BaseBehaviour):
     def run_behaviour(self):
         app_logger.info("Starting attack_phishing behaviour")
 
-        self.selenium_controller = getSeleniumController(self.mail_client)
+        self.selenium_controller = getSeleniumController(self.email_client)
         email_client = self.selenium_controller.email_client
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
@@ -60,9 +61,9 @@ class BehaviourAttackPhishing(BaseBehaviour):
 
         BrowserUtils.search_by_url(self.general_cfg["organization_mail_server_url"])
 
-        email_client.login(self.user["email"], self.user["password"])
+        email_client.login(self.user["domain_email"], self.user["domain_password"])
 
-        if email_client.type == "roundcube":
+        if email_client.type == EmailClient.ROUNDCUBE:
             self.selenium_controller.roundcube_set_language()
 
         time.sleep(4)
@@ -70,7 +71,7 @@ class BehaviourAttackPhishing(BaseBehaviour):
         unread_emails = email_client.get_unread_emails()
 
         for email in unread_emails:
-            if email_client.type == "roundcube":
+            if email_client.type == EmailClient.ROUNDCUBE:
                 subject_link = email.find_element(By.CSS_SELECTOR, "td.subject a")
             else:
                 subject_link = email.find_element(
@@ -79,7 +80,7 @@ class BehaviourAttackPhishing(BaseBehaviour):
                 subject_link.click()
                 break
 
-        if email_client.type == "roundcube":
+        if email_client.type == EmailClient.ROUNDCUBE:
             iframe = self.selenium_controller.driver.find_element(By.NAME, "messagecontframe")
             time.sleep(1)
             self.selenium_controller.driver.switch_to.frame(iframe)
@@ -91,36 +92,17 @@ class BehaviourAttackPhishing(BaseBehaviour):
             self.selenium_controller.driver.find_element(
                 By.XPATH, "//a[contains(text(), 'SECURE ACCOUNT') or contains(text(), 'ZABEZPEČIŤ ÚČET')]").click()
 
-            if email_client.type == "roundcube":
+            if email_client.type == EmailClient.ROUNDCUBE:
                 self.selenium_controller.driver.switch_to.default_content()
             found_phishing_link = True
             time.sleep(2)
 
             self.selenium_controller.switch_tab()
-            self.selenium_controller.phishing_roundcube_enter_credentials(self.user["email"], self.user["password"])
+            self.selenium_controller.phishing_enter_credentials(self.user["domain_email"], self.user["domain_password"])
             time.sleep(1)
             BrowserUtils.close_latest_tab()
 
-            app_logger.info("Entered roundcube phishing credentials")
-        except NoSuchElementException:
-            pass
-
-        try:
-            self.selenium_controller.driver.find_element(
-                By.XPATH, "//a[contains(text(), 'Verify Password') or contains(text(), 'Overiť heslo')]").click()
-
-            if email_client.type == "roundcube":
-                self.selenium_controller.driver.switch_to.default_content()
-
-            found_phishing_link = True
-            time.sleep(2)
-
-            self.selenium_controller.switch_tab()
-            self.selenium_controller.phishing_owa_enter_credentials(self.user["email"], self.user["password"])
-            time.sleep(1)
-            BrowserUtils.close_latest_tab()
-
-            app_logger.info("Entered owa phishing credentials")
+            app_logger.info("Entered phishing credentials")
         except NoSuchElementException:
             pass
 

@@ -4,6 +4,7 @@ import sys
 import pyautogui as pag
 
 from cleanup_manager import CleanupManager
+from models.email_client import EmailClient
 
 behaviour_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(behaviour_dir)
@@ -16,7 +17,6 @@ from app_logger import app_logger
 
 from utils.selenium_utils import (
     EdgeSeleniumController,
-    EmailClientType,
     FirefoxSeleniumController,
 )
 from utils.behaviour import BaseBehaviour, BehaviourCategory
@@ -42,14 +42,12 @@ class BehaviourAttackReverseShell(BaseBehaviour):
         super().__init__(cleanup_manager)
         
         if cleanup_manager is not None:
-            self.landscape_id = int(app_config["app"]["landscape"])
-            self.behaviour_cfg = automation_config
-            self.user = self.behaviour_cfg["general"]["user"]
-            self.attack_reverse_shell_cfg = self.behaviour_cfg["attack_reverse_shell"]
-            self.email_client_type: EmailClientType = "owa" if self.landscape_id in [2] else "roundcube"
+            self.behaviours_cfg = automation_config["behaviours"]
+            self.user = automation_config["general"]["user"]
+            self.attack_reverse_shell_cfg = self.behaviours_cfg["attack_reverse_shell"]
+            self.email_client_type = EmailClient(automation_config["general"]["email_client"])
         else:
-            self.landscape_id = None
-            self.behaviour_cfg = None
+            self.behaviours_cfg = None
             self.user = None
             self.attack_reverse_shell_cfg = None
             self.email_client_type = None
@@ -74,10 +72,10 @@ class BehaviourAttackReverseShell(BaseBehaviour):
         self.selenium_controller.maximize_driver_window()
         time.sleep(4)
 
-        BrowserUtils.search_by_url(self.behaviour_cfg["general"]["organization_mail_server_url"])
+        BrowserUtils.search_by_url(automation_config["general"]["organization_mail_server_url"])
         time.sleep(4)
 
-        self.selenium_controller.email_client_login(self.user["email"], self.user["password"])
+        self.selenium_controller.email_client.login(self.user["domain_email"], self.user["domain_password"])
 
         if self.email_client_type == "roundcube":
             self.selenium_controller.roundcube_set_language()
@@ -100,7 +98,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
                 subject_link.click()
                 break
 
-        if self.email_client_type == "roundcube":
+        if self.email_client_type == EmailClient.OWA:
             iframe = self.selenium_controller.driver.find_element(By.NAME, "messagecontframe")
             time.sleep(1)
             self.selenium_controller.driver.switch_to.frame(iframe)

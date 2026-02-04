@@ -7,14 +7,16 @@ app:
 
 automation:
   general:
-    mail_client: "owa"
+    email_client: "owa"
     is_conversation_starter: False
     organization_mail_server_url: "http://mail.domain.internal"
     organization_web_url: "https://www.domain.internal"
     archive_path: C:/Archive
     user:
-      email: "userplaceholder"
-      password: "passwordplaceholder"
+      domain_email: "userplaceholder"
+      domain_password: "passwordplaceholder"
+      o365_email: "userplaceholder"
+      o365_email: "passwordplaceholder"
   idle_cycle:
     procrastination_chance: -1.0
   behaviours:
