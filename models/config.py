@@ -15,7 +15,7 @@ class IdleCycle(TypedDict):
 
 
 class General(TypedDict):
-    mail_client: EmailClient
+    email_client: EmailClient
     user: User
     is_conversation_starter: bool
     organization_mail_server_url: str

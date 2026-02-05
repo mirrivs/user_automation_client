@@ -3,7 +3,7 @@ import platform
 import threading
 import ctypes
 from typing import Callable
-from app_config import app_config
+from app_config import automation_config
 from app_logger import app_logger
 
 
@@ -143,19 +143,18 @@ class BaseBehaviour(threading.Thread):
         return f"<{self.__class__.__name__}(id='{self.id}', available={self.is_available})>"
 
 
-def get_behaviour_cfg(behaviour_id: str, config: dict, required: bool = False) -> dict:
+def get_behaviour_cfg(behaviour_id: str, required: bool = False) -> dict:
     """
     Retrieve behaviour configuration from main config.
     
     Args:
         behaviour_id: Id of the behaviour to get config for
-        config: Main application config dict
         required: If True, raises BehaviourException when config not found
         
     Returns:
         Behaviour configuration dict, or empty dict if not found and not required
     """
-    behaviour_cfg = config.get("automation", {}).get("behaviours", {}).get(behaviour_id, {})
+    behaviour_cfg = automation_config.get("behaviours", {}).get(behaviour_id, {})
     if not behaviour_cfg and required:
         raise BehaviourException(f"Configuration for task '{behaviour_id}' not found")
     return behaviour_cfg

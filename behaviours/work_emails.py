@@ -1,14 +1,13 @@
 import platform
 import time
-from typing import Optional
 
-from app_config import app_config
+from app_config import automation_config
 from app_logger import app_logger
+from behaviours.utils.email_web_client import EmailClientUser
 from cleanup_manager import CleanupManager
 
 from models.email_client import EmailClient
-from utils.selenium_utils import SeleniumController, getSeleniumController
-from utils.email_manager import EmailManager
+from utils.selenium_utils import getSeleniumController
 from utils.behaviour import get_behaviour_cfg, BaseBehaviour, BehaviourCategory
 
 from scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
@@ -31,31 +30,32 @@ class BehaviourWorkEmails(BaseBehaviour):
         super().__init__(cleanup_manager)
         
         if cleanup_manager is not None:
-            self.general_cfg = app_config["automation"]["general"]
-            self.email_client = EmailClient(self.general_cfg["email_client"])
-            self.user = self.general_cfg["user"]
-            # Config is optional for work_emails - uses general config
-            self.behaviour_cfg = get_behaviour_cfg("work_emails", {})
-            self.email_manager = EmailManager()
+            self.general_cfg = automation_config["general"]
+            self.user = self.general_cfg["user"]  # ← Fixed
+            self.behaviour_cfg = get_behaviour_cfg("work_emails")
+            self.email_client_type = EmailClient(self.general_cfg["email_client"])
+            
+            is_o365 = self.email_client_type == EmailClient.O365
+            email_client_user: EmailClientUser = {
+                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"]
+            }
+            
+            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
         else:
             self.general_cfg = None
-            self.email_client = None
+            self.email_client_type = None
             self.user = None
             self.behaviour_cfg = None
             self.email_manager = None
             
-        self.selenium_controller: Optional[SeleniumController] = None
-
     def _is_available(self) -> bool:
         return platform.system() in ["Windows", "Linux", "Darwin"]
 
     def run_behaviour(self):
-        email = self.user["o365_email"] if self.email_client.type == EmailClient.O365 else self.user["email"]
-        password = self.user["o365_password"] if self.email_client.type == EmailClient.O365 else self.user["password"]
-
         app_logger.info("Starting work_emails behaviour")
 
-        self.selenium_controller = getSeleniumController(self.email_client)
         email_client = self.selenium_controller.email_client
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
@@ -66,50 +66,25 @@ class BehaviourWorkEmails(BaseBehaviour):
 
         BrowserUtils.search_by_url(self.general_cfg["organization_mail_server_url"])
 
-        email_client.login(email, password)
+        email_client.login()
 
         if email_client.type == EmailClient.ROUNDCUBE:
             self.selenium_controller.roundcube_set_language()
 
-        time.sleep(4)
+        # Wait for the web to fully load
+        time.sleep(6)
 
         unread_emails = email_client.get_unread_emails()
 
-        responded = False
-        for email in unread_emails:
-            subject_link = None
-            if email_client.type == EmailClient.OWA:
-                subject_link = email.find_element(
-                    By.XPATH, "//span[contains(@class, 'lvHighlightAllClass lvHighlightSubjectClass')]")
-            else:
-                subject_link = email.find_element(By.CSS_SELECTOR, "td.subject a")
+        responded_count = email_client.reply_to_emails(unread_emails)
 
-            email_id = self.email_manager.get_email_id_by_subject(subject_link.text)
-            if email_id:
-                if email_client.type == EmailClient.OWA:
-                    subject_link.click()
-                else:
-                    email.click()
-
-                time.sleep(2)
-
-                reply = self.email_manager.get_email_response(email_id)
-                if reply is not None:
-                    sender_name = email.split(".")[0].capitalize()
-                    email_client.reply_to_email(sender_name, reply["subject"], reply["email_body"])
-                    responded = True
-                else:
-                    time.sleep(5)
-
-        if not responded and self.general_cfg.get("is_conversation_starter", False):
+        if not responded_count and self.general_cfg.get("is_conversation_starter", False):
             email_receivers = self.behaviour_cfg.get("email_receivers")
             if not email_receivers:
-                app_logger.warning("Cannot start email conversation: 'email_receivers' not configured in tasks.work_emails")
+                app_logger.warning("Cannot start email conversation: 'email_receivers' not configured in behaviours.work_emails")
                 return
             
             email = self.email_manager.get_email_starter()
-            sender_name = email.split(".")[0].capitalize()
-            email_client.send_email(
-                sender_name, email_receivers, email["subject"], email["email_body"])
+            email_client.send_email(email_receivers, email["subject"], email["email_body"])
 
         app_logger.info("Completed work_emails behaviour")

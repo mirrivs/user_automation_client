@@ -7,8 +7,9 @@ from app_config import automation_config
 from app_logger import app_logger
 from cleanup_manager import CleanupManager
 
-from utils.selenium_utils import EdgeSeleniumController, FirefoxSeleniumController
-from utils.behaviour import BaseBehaviour, BehaviourCategory
+from models.email_client import EmailClient
+from utils.selenium_utils import EdgeSeleniumController, EmailClientUser, FirefoxSeleniumController, getSeleniumController
+from utils.behaviour import BaseBehaviour, BehaviourCategory, get_behaviour_cfg
 
 from scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 
@@ -49,24 +50,27 @@ class BehaviourProcrastination(BaseBehaviour):
         
         if cleanup_manager is not None:
             self.user = automation_config["general"]["user"]
-            self.behaviour_cfg = automation_config["behaviours"]["procrastination"]
+            self.behaviour_cfg = get_behaviour_cfg("procrastination")
+            self.email_client_type = EmailClient(automation_config["general"]["email_client"])
+            
+            is_o365 = self.email_client_type == EmailClient.O365
+            email_client_user: EmailClientUser = {
+                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"]
+            }
+            
+            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
         else:
             self.user = None
             self.behaviour_cfg = None
             
-        self.selenium_controller = None
 
     def _is_available(self) -> bool:
         return self.os_type in ["Windows", "Linux", "Darwin"]
 
     def run_behaviour(self):
         app_logger.info("Starting procrastination behaviour")
-
-        self.selenium_controller = (
-            FirefoxSeleniumController()
-            if self.os_type == "Linux"
-            else EdgeSeleniumController()
-        )
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)

@@ -17,9 +17,11 @@ from app_logger import app_logger
 
 from utils.selenium_utils import (
     EdgeSeleniumController,
+    EmailClientUser,
     FirefoxSeleniumController,
+    getSeleniumController,
 )
-from utils.behaviour import BaseBehaviour, BehaviourCategory
+from utils.behaviour import BaseBehaviour, BehaviourCategory, get_behaviour_cfg
 
 from scripts_pyautogui.win_utils import win_utils
 from scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
@@ -42,29 +44,27 @@ class BehaviourAttackReverseShell(BaseBehaviour):
         super().__init__(cleanup_manager)
         
         if cleanup_manager is not None:
-            self.behaviours_cfg = automation_config["behaviours"]
             self.user = automation_config["general"]["user"]
-            self.attack_reverse_shell_cfg = self.behaviours_cfg["attack_reverse_shell"]
+            self.behaviour_cfg = get_behaviour_cfg("attack_reverse_shell")
             self.email_client_type = EmailClient(automation_config["general"]["email_client"])
-        else:
-            self.behaviours_cfg = None
-            self.user = None
-            self.attack_reverse_shell_cfg = None
-            self.email_client_type = None
             
-        self.selenium_controller = None
-
+            is_o365 = self.email_client_type == EmailClient.O365
+            email_client_user: EmailClientUser = {
+                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"]
+            }
+            
+            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
+        else:
+            self.user = None
+            self.behaviour_cfg = None
+            
     def _is_available(self) -> bool:
         return self.os_type in ["Windows", "Linux"]
 
     def run_behaviour(self):
         app_logger.info("Starting attack_reverse_shell behaviour")
-
-        self.selenium_controller = (
-            FirefoxSeleniumController()
-            if self.os_type == "Linux"
-            else EdgeSeleniumController()
-        )
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
@@ -94,7 +94,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
             else:
                 subject_link = email.find_element(By.CSS_SELECTOR, "td.subject a")
 
-            if subject_link.text == self.attack_reverse_shell_cfg["malicious_email_subject"]:
+            if subject_link.text == self.behaviour_cfg["malicious_email_subject"]:
                 subject_link.click()
                 break
 

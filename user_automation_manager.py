@@ -111,7 +111,7 @@ class UserAutomationManager:
     def _connect_websocket(self) -> bool:
         """Establish WebSocket connection for real-time updates"""
         try:
-            ws_url = f"{app_config['app']['user_automation_server_websocket']}/client/client_socket"
+            ws_url = app_config['app']['user_automation_server_websocket'] + "/client/client_socket"
 
             logger.info(f"Connecting to WebSocket at {ws_url}")
 
