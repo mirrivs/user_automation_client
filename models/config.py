@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from models.email_client import EmailClient
+from behaviour.selenium.models.email_client import EmailClient
 
 
 class User(TypedDict):

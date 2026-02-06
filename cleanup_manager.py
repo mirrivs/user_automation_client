@@ -1,4 +1,4 @@
-from behaviours.utils.selenium_utils import (
+from behaviour.selenium.selenium_controller import (
     EdgeSeleniumController,
     FirefoxSeleniumController,
 )
@@ -7,9 +7,7 @@ from typing import Callable, Dict, List, Any, Optional, Union
 
 class CleanupManager:
     def __init__(self):
-        self.selenium_controller: Optional[
-            Union[EdgeSeleniumController, FirefoxSeleniumController]
-        ] = None
+        self.selenium_controller: Optional[Union[EdgeSeleniumController, FirefoxSeleniumController]] = None
         self.cleanup_stack: List[Dict[str, Any]] = []
 
     def add_cleanup_task(self, func: Callable, *args, **kwargs) -> int:
@@ -52,9 +50,7 @@ class CleanupManager:
             else:
                 raise IndexError(f"Cleanup stack index {index} out of range")
 
-    def set_selenium_controller(
-        self, controller: Union[EdgeSeleniumController, FirefoxSeleniumController]
-    ) -> int:
+    def set_selenium_controller(self, controller: Union[EdgeSeleniumController, FirefoxSeleniumController]) -> int:
         """
         Set the selenium controller for cleanup
 
@@ -80,4 +76,3 @@ class CleanupManager:
                 print(f"Error during cleanup: {e}")
 
         self.cleanup_stack = []
-

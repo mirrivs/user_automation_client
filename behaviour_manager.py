@@ -7,15 +7,16 @@ from typing import Type, Union
 from app_logger import app_logger
 
 # Import behaviour classes
-from behaviours.attack_phishing import BehaviourAttackPhishing
-from behaviours.attack_ransomware import BehaviourAttackRansomware
-from behaviours.attack_reverse_shell import BehaviourAttackReverseShell
-from behaviours.procrastination import BehaviourProcrastination
-from behaviours.work_developer import BehaviourWorkDeveloper
-from behaviours.work_emails import BehaviourWorkEmails
-from behaviours.work_organization_web import BehaviourWorkOrganizationWeb
-from behaviours.work_word import BehaviourWorkWord
-from behaviours.utils.behaviour import BaseBehaviour, BehaviourCategory
+from behaviour.behaviour import BaseBehaviour
+from behaviour.behaviours.attack_phishing import BehaviourAttackPhishing
+from behaviour.behaviours.attack_ransomware import BehaviourAttackRansomware
+from behaviour.behaviours.attack_reverse_shell import BehaviourAttackReverseShell
+from behaviour.behaviours.procrastination import BehaviourProcrastination
+from behaviour.behaviours.work_developer import BehaviourWorkDeveloper
+from behaviour.behaviours.work_emails import BehaviourWorkEmails
+from behaviour.behaviours.work_organization_web import BehaviourWorkOrganizationWeb
+from behaviour.behaviours.work_word import BehaviourWorkWord
+from behaviour.models.behaviour import BehaviourCategory
 from cleanup_manager import CleanupManager
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
@@ -39,16 +40,16 @@ class BehaviourManager:
     """
     Behaviour controller for automation.
     Controls the execution and tracking of automated behaviours using interruptible threads.
-    
+
     Uses behaviour instances directly instead of dictionaries for cleaner code.
     """
 
     def __init__(self, behaviour_classes: list[Type[BaseBehaviour]] = None):
         """
         Initialize the BehaviourManager.
-        
+
         Args:
-            behaviour_classes: List of behaviour classes to manage. 
+            behaviour_classes: List of behaviour classes to manage.
                                Defaults to BEHAVIOUR_CLASSES if not provided.
         """
         if behaviour_classes is None:
@@ -56,29 +57,29 @@ class BehaviourManager:
 
         # Store behaviour classes by id
         self._behaviour_classes: dict[str, Type[BaseBehaviour]] = {}
-        
+
         # Store prototype instances for metadata (created with cleanup_manager=None)
         self._behaviour_prototypes: dict[str, BaseBehaviour] = {}
-        
+
         # Track which behaviours are available
         self._available_behaviour_ids: list[str] = []
-        
+
         # Initialize behaviours
         for behaviour_class in behaviour_classes:
             try:
                 # Create prototype instance to check availability and get metadata
                 prototype = behaviour_class(cleanup_manager=None)
                 behaviour_id = prototype.id
-                
+
                 self._behaviour_classes[behaviour_id] = behaviour_class
                 self._behaviour_prototypes[behaviour_id] = prototype
-                
+
                 if prototype.is_available:
                     self._available_behaviour_ids.append(behaviour_id)
                     app_logger.debug(f"Behaviour '{behaviour_id}' is available")
                 else:
                     app_logger.debug(f"Behaviour '{behaviour_id}' is NOT available on this system")
-                    
+
             except Exception as ex:
                 app_logger.warning(f"Failed to initialize behaviour class {behaviour_class.__name__}: {ex}")
 
@@ -98,12 +99,10 @@ class BehaviourManager:
         self.behaviour_thread: BaseBehaviour = None
         self.cleanup_manager: CleanupManager = None
 
-        app_logger.info(f"BehaviourManager initialized with {len(self._available_behaviour_ids)} available behaviours: {self._available_behaviour_ids}")
+        app_logger.info(
+            f"BehaviourManager initialized with {len(self._available_behaviour_ids)} available behaviours: {self._available_behaviour_ids}"
+        )
 
-    # =========================================================================
-    # Properties for accessing behaviours
-    # =========================================================================
-    
     @property
     def available_behaviours(self) -> dict[str, BaseBehaviour]:
         """Get all available behaviour prototypes by id."""
@@ -124,7 +123,7 @@ class BehaviourManager:
         """Get available idle behaviours."""
         return self._behaviours_by_category.get(BehaviourCategory.IDLE, [])
 
-    @property 
+    @property
     def attack_behaviours(self) -> list[BaseBehaviour]:
         """Get available attack behaviours."""
         return self._behaviours_by_category.get(BehaviourCategory.ATTACK, [])
@@ -143,11 +142,11 @@ class BehaviourManager:
     def run_behaviour(self, behaviour_id: str, force: bool = False) -> Union[BaseBehaviour, None]:
         """
         Executes a behaviour in an interruptible thread.
-        
+
         Args:
             behaviour_id: The ID of the behaviour to run.
             force: If True, forcefully stop any running behaviour before starting.
-            
+
         Returns:
             The started behaviour thread, or None if failed.
         """
@@ -185,13 +184,11 @@ class BehaviourManager:
             # Start the behaviour thread
             self.behaviour_thread.start()
 
-            app_logger.info(
-                f"Behaviour '{behaviour_id}' started (Thread ID: {self.behaviour_thread.ident})"
-            )
+            app_logger.info(f"Behaviour '{behaviour_id}' started (Thread ID: {self.behaviour_thread.ident})")
             self.behaviour_history.append(behaviour_id)
 
             return self.behaviour_thread
-            
+
         except Exception as ex:
             app_logger.error(f"Error while running behaviour {behaviour_id}: {ex}", exc_info=True)
             self.current_behaviour = None
@@ -231,7 +228,9 @@ class BehaviourManager:
                         app_logger.warning("Thread did not stop gracefully after 2 seconds")
 
                 self.handle_behaviour_finish()
-                app_logger.info(f"Terminated behaviour: {self.current_behaviour.id if self.current_behaviour else 'unknown'}")
+                app_logger.info(
+                    f"Terminated behaviour: {self.current_behaviour.id if self.current_behaviour else 'unknown'}"
+                )
             else:
                 app_logger.info("No behaviour is currently running to terminate.")
         except Exception as ex:
@@ -261,38 +260,39 @@ class BehaviourManager:
     def evaluate_next_idle_behaviour(self) -> Union[str, None]:
         """
         Evaluates and returns the next idle behaviour to run.
-        Avoids recently executed behaviours to provide variety.
+        Avoids recently executed idle behaviours to provide variety.
+
+        Only considers idle history (not attacks or other categories)
+        when deciding which behaviours to exclude.
         """
         try:
-            idle_behaviour_ids = [b.id for b in self.idle_behaviours]
+            idle_behaviours = self._behaviours_by_category[BehaviourCategory.IDLE]
 
-            if not idle_behaviour_ids:
+            if not idle_behaviours:
                 return None
 
-            if not self.behaviour_history:
-                options_list = idle_behaviour_ids
+            idle_ids = {b.id for b in idle_behaviours}
+
+            # Filter history to only idle behaviours so that attack runs
+            # don't waste exclusion slots and cause idle repeats.
+            idle_history = [bid for bid in self.behaviour_history if bid in idle_ids]
+
+            if not idle_history:
+                options = idle_behaviours
             else:
-                num_to_exclude = min(len(idle_behaviour_ids) - 1, len(self.behaviour_history))
-                if num_to_exclude < 0:
-                    num_to_exclude = 0
+                num_to_exclude = min(len(idle_behaviours) - 1, len(idle_history))
+                recent_to_exclude = set(idle_history[-num_to_exclude:])
+                options = [b for b in idle_behaviours if b.id not in recent_to_exclude]
 
-                recent_ids_to_exclude = set(self.behaviour_history[-num_to_exclude:])
-                options_list = [bid for bid in idle_behaviour_ids if bid not in recent_ids_to_exclude]
+                if not options:
+                    options = idle_behaviours
 
-                if not options_list:
-                    options_list = idle_behaviour_ids
-
-            return random.choice(options_list) if options_list else None
+            return random.choice(options).id if options else None
 
         except Exception as ex:
             app_logger.error(f"Error while evaluating behaviour: {ex}")
-            if self.idle_behaviours:
-                return self.idle_behaviours[0].id
-            return None
-
-    # =========================================================================
-    # Utility methods
-    # =========================================================================
+            idle_behaviours = self.get_idle_behaviours()
+            return idle_behaviours[0].id if idle_behaviours else None
 
     def get_behaviour(self, behaviour_id: str) -> Union[BaseBehaviour, None]:
         """Get the prototype instance for a specific behaviour."""
@@ -320,7 +320,7 @@ class BehaviourManager:
         if behaviour_id not in self._available_behaviour_ids:
             app_logger.error(f"Cannot queue invalid/unavailable behaviour ID: {behaviour_id}")
             return
-        
+
         self.behaviour_queue.put((priority, behaviour_id))
         app_logger.info(f"Queued behaviour '{behaviour_id}' with priority {priority}")
 

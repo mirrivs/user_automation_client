@@ -1,6 +1,6 @@
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QStyle
+from PyQt6.QtCore import QTimer, Qt, QSize
 import os
 import sys
 import platform
@@ -79,8 +79,12 @@ class SystemTrayApp:
                 icon_path_32 = os.path.join(parent_dir, "static", "logos", "user_automation_logo_32.png")
                 if os.path.exists(icon_path_32):
                     pixmap = QPixmap(icon_path_32)
-                    scaled_pixmap = pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio,
-                                                  Qt.TransformationMode.SmoothTransformation)
+                    scaled_pixmap = pixmap.scaled(
+                        size,
+                        size,
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
                     icon.addPixmap(scaled_pixmap)
                     app_logger.info(f"Added scaled icon from 32x32 to {size}x{size}")
 
@@ -123,7 +127,10 @@ class SystemTrayApp:
 
             app_logger.debug(f"Qt tray icon created. Visible: {self.tray.isVisible()}")
             if is_ubuntu:
-                app_logger.warning("Ubuntu detected: Left-click on tray icon may not work due to AppIndicator limitations. Use right-click menu instead.")
+                app_logger.warning(
+                    "Ubuntu detected: Left-click on tray icon may not work due to "
+                    "AppIndicator limitations. Use right-click menu instead."
+                )
             else:
                 app_logger.debug("Tray icon with context menu - left-click should toggle popup")
 
@@ -161,15 +168,11 @@ class SystemTrayApp:
     def toggle_idle_cycle(self):
         try:
             if self.user_automation_manager.idle_cycle_status == IdleCycleStatus.PAUSED:
-                self.user_automation_manager.set_idle_cycle_status(
-                    IdleCycleStatus.RUNNING
-                )
+                self.user_automation_manager.set_idle_cycle_status(IdleCycleStatus.RUNNING)
                 if self.popup.isVisible():
                     self.popup.update_idle_cycle_button(False)
             else:
-                self.user_automation_manager.set_idle_cycle_status(
-                    IdleCycleStatus.PAUSED
-                )
+                self.user_automation_manager.set_idle_cycle_status(IdleCycleStatus.PAUSED)
                 if self.popup.isVisible():
                     self.popup.update_idle_cycle_button(True)
 
@@ -194,8 +197,7 @@ class SystemTrayApp:
                 app_logger.info("Showing popup window")
                 self.popup.update_status()
                 self.popup.update_idle_cycle_button(
-                    self.user_automation_manager.idle_cycle_status
-                    == IdleCycleStatus.PAUSED
+                    self.user_automation_manager.idle_cycle_status == IdleCycleStatus.PAUSED
                 )
                 self.popup.position_for_os()
                 self.popup.show()

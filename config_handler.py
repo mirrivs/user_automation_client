@@ -1,9 +1,6 @@
-import requests
 import yaml
 import sys
 import os
-
-from app_logger import app_logger
 
 
 def load_config(config_file: str):
@@ -27,6 +24,7 @@ def save_config(config_file: str, config: dict):
         except yaml.YAMLError as ex:
             print(f"Error writing configuration to '{config_file}': {ex}")
             sys.exit(1)
+
 
 def clear_behaviour_cfg(config_file):
     """

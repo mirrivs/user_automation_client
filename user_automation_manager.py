@@ -11,7 +11,6 @@ import websocket
 
 from app_config import AppConfig, app_config, automation_config, save_app_config
 from behaviour_manager import BehaviourManager
-from config_handler import save_config
 from json_encoder import EnumEncoder
 
 logger = logging.getLogger(__name__)
@@ -87,18 +86,16 @@ class UserAutomationManager:
             if response.status_code == 200:
                 auth_response = response.json()
                 self.access_token = auth_response.get("access_token")
-                
+
                 # Merge server config with local config
                 server_config = auth_response.get("client_config", {})
                 if server_config:
                     self._merge_config(server_config)
-                    
+
                 logger.info("Successfully authenticated with server")
                 return True
             else:
-                logger.error(
-                    f"Authentication failed: {response.status_code}"
-                )
+                logger.error(f"Authentication failed: {response.status_code}")
                 return False
 
         except requests.RequestException as e:
@@ -111,7 +108,7 @@ class UserAutomationManager:
     def _connect_websocket(self) -> bool:
         """Establish WebSocket connection for real-time updates"""
         try:
-            ws_url = app_config['app']['user_automation_server_websocket'] + "/client/client_socket"
+            ws_url = app_config["app"]["user_automation_server_websocket"] + "/client/client_socket"
 
             logger.info(f"Connecting to WebSocket at {ws_url}")
 
@@ -151,7 +148,7 @@ class UserAutomationManager:
                 behaviour_id = data.get("behaviour_id")
                 if behaviour_id:
                     self.run_behaviour(behaviour_id, True)
-                    
+
             else:
                 logger.debug(f"Unknown action type: {action}")
 
@@ -159,7 +156,7 @@ class UserAutomationManager:
             logger.error(f"Error parsing WebSocket message: {e}")
         except Exception as e:
             logger.error(f"Error handling WebSocket message: {e}")
-    
+
     def run_behaviour(self, behaviour_id: str, force: bool = False):
         """Run a specific behaviour"""
         self.behaviour_manager.run_behaviour(behaviour_id, force)
@@ -170,12 +167,12 @@ class UserAutomationManager:
         try:
             # Deep merge the configuration
             self._deep_merge_dict(self.config, new_config)
-            
+
             # Save to file
             save_app_config(self.config)
-            
+
             logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
-                
+
         except Exception as e:
             logger.error(f"Error merging config: {e}")
             raise e
@@ -198,13 +195,13 @@ class UserAutomationManager:
                 self.config["behaviour"]["behaviours"] = {}
             if behaviour_id not in self.config["behaviour"]["behaviours"]:
                 self.config["behaviour"]["behaviours"][behaviour_id] = {}
-            
-            self.config["behaviour"]["behaviours"][behaviour_id] = behaviour_config 
-                
+
+            self.config["behaviour"]["behaviours"][behaviour_id] = behaviour_config
+
             save_app_config(self.config)
-            
+
             logger.info(f"Behaviour configuration updated and saved for {behaviour_id}")
-            
+
         except Exception as e:
             logger.error(f"Error updating behaviour config for {behaviour_id}: {e}")
             raise e
@@ -240,8 +237,8 @@ class UserAutomationManager:
 
     def _run_server_connection(self):
         """Main server connection loop"""
-        default_reconnect_delay = app_config['app']['server_reconnect_delay']
-        max_reconnect_delay = app_config['app']['server_max_reconnect_delay']
+        default_reconnect_delay = app_config["app"]["server_reconnect_delay"]
+        max_reconnect_delay = app_config["app"]["server_max_reconnect_delay"]
 
         reconnect_delay = default_reconnect_delay
 
@@ -254,9 +251,7 @@ class UserAutomationManager:
                             reconnect_delay = default_reconnect_delay
                             logger.info("Successfully connected to server")
                         else:
-                            logger.error(
-                                "Failed to establish WebSocket connection"
-                            )
+                            logger.error("Failed to establish WebSocket connection")
                     else:
                         logger.error("Failed to authenticate with server")
 
@@ -287,9 +282,7 @@ class UserAutomationManager:
                     self._send_status_update()
 
                 if not self.is_connected:
-                    logger.info(
-                        f"Retrying connection in {reconnect_delay} seconds..."
-                    )
+                    logger.info(f"Retrying connection in {reconnect_delay} seconds...")
                     time.sleep(reconnect_delay)
                     reconnect_delay = min(reconnect_delay * 2, max_reconnect_delay)
                 else:
@@ -315,7 +308,7 @@ class UserAutomationManager:
 
                 if config_changed:
                     # Only reload if behaviour manager has this method
-                    if hasattr(self.behaviour_manager, 'load_behaviour_queue'):
+                    if hasattr(self.behaviour_manager, "load_behaviour_queue"):
                         self.behaviour_manager.load_behaviour_queue()
                     logger.info("Configuration changed - behaviour manager reloaded")
 

@@ -1,18 +1,27 @@
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6 import QtSvg, QtGui
+from PyQt6.QtWidgets import (
+    QWidget,
+    QFrame,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTabWidget,
+    QScrollArea,
+    QApplication,
+)
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QIcon, QImage, QPainter, QPixmap
+from PyQt6.QtSvg import QSvgRenderer
 import platform
 import os
 
+from behaviour.behaviour import BaseBehaviour
 from resource_path import resource_path
 from user_automation_manager import UserAutomationManager
-from behaviours.utils.behaviour import BaseBehaviour
 
 
 class PopupWindow(QWidget):
-    def __init__(
-        self, user_automation_manager: UserAutomationManager, toggle_idle_cycle_fn
-    ):
+    def __init__(self, user_automation_manager: UserAutomationManager, toggle_idle_cycle_fn):
         super().__init__()
 
         self.user_automation_manager = user_automation_manager
@@ -20,11 +29,7 @@ class PopupWindow(QWidget):
 
         self.toggle_idle_cycle = toggle_idle_cycle_fn
 
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.Tool
-        )
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.setFixedSize(300, 400)
@@ -49,14 +54,14 @@ class PopupWindow(QWidget):
 
         # Close button with SVG icon
         svg_path = resource_path("static/ic--round-close.svg")
-        svg_renderer = QtSvg.QSvgRenderer(svg_path)
-        img = QtGui.QImage(16, 16, QtGui.QImage.Format.Format_ARGB32)
+        svg_renderer = QSvgRenderer(svg_path)
+        img = QImage(16, 16, QImage.Format.Format_ARGB32)
         img.fill(0)
-        painter = QtGui.QPainter(img)
+        painter = QPainter(img)
         svg_renderer.render(painter)
         painter.end()
 
-        icon = QtGui.QIcon(QtGui.QPixmap.fromImage(img))
+        icon = QIcon(QPixmap.fromImage(img))
         close_btn = QPushButton()
         close_btn.setIcon(icon)
 
@@ -138,9 +143,7 @@ class PopupWindow(QWidget):
 
         # Status label
         self.status_label = QLabel("")
-        self.status_label.setStyleSheet(
-            "font-size: 11px; color: #666; margin-top: 10px;"
-        )
+        self.status_label.setStyleSheet("font-size: 11px; color: #666; margin-top: 10px;")
         content_layout.addWidget(self.status_label)
 
         # Current behaviour info
@@ -250,7 +253,7 @@ class PopupWindow(QWidget):
         behaviour_id = sender.property("behaviour_id")
 
         if self.behaviour_manager.is_behaviour_running():
-            self.status_label.setText(f"Wait for current behaviour to finish")
+            self.status_label.setText("Wait for current behaviour to finish")
             self.status_label.setStyleSheet("font-size: 11px; color: #ff5500;")
         else:
             self.status_label.setText(f"Running behaviour: {behaviour_id}")
@@ -269,16 +272,14 @@ class PopupWindow(QWidget):
     def update_status(self):
         if self.behaviour_manager.is_behaviour_running():
             current_behaviour = self.behaviour_manager.current_behaviour
-            self.status_label.setText(f"Behaviour is running")
+            self.status_label.setText("Behaviour is running")
             self.status_label.setStyleSheet("font-size: 11px; color: #008800;")
             # current_behaviour is now a BaseBehaviour instance
             display_name = current_behaviour.display_name if current_behaviour else "Unknown"
             self.current_behaviour_label.setText(f"Current: {display_name}")
-            self.current_behaviour_label.setStyleSheet(
-                "font-size: 11px; color: #008800;"
-            )
+            self.current_behaviour_label.setStyleSheet("font-size: 11px; color: #008800;")
         else:
-            self.status_label.setText(f"Ready to run behaviours")
+            self.status_label.setText("Ready to run behaviours")
             self.status_label.setStyleSheet("font-size: 11px; color: #666;")
             self.current_behaviour_label.setText("")
 
@@ -302,18 +303,10 @@ class PopupWindow(QWidget):
                 y = screen_geometry.y() + padding
             elif "kde" in desktop_env:
                 x = screen_geometry.width() - (self.width() - screen_geometry.x()) - padding
-                y = (
-                    screen_geometry.height()
-                    - (self.height() - screen_geometry.y())
-                    - padding
-                )
+                y = screen_geometry.height() - (self.height() - screen_geometry.y()) - padding
             else:
                 x = screen_geometry.width() - (self.width() - screen_geometry.x()) - padding
-                y = (
-                    screen_geometry.height()
-                    - (self.height() - screen_geometry.y())
-                    - padding
-                )
+                y = screen_geometry.height() - (self.height() - screen_geometry.y()) - padding
 
         self.move(x, y)
 
