@@ -1,16 +1,15 @@
+import os
 import platform
 import random
-import os
 import time
 
 from app_config import automation_config
 from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
-from behaviour.behaviours.work_word import TEMPLATES_DIR
+from behaviour.consts import TEMPLATES_DIR
+from behaviour.models.behaviour import BehaviourCategory
 from behaviour.scripts_pyautogui.os_utils import os_utils
 from cleanup_manager import CleanupManager
-
-from behaviour.models.behaviour import BehaviourCategory
 
 LINUX_FILE = os.path.join(TEMPLATES_DIR, "c_program.txt")
 WINDOWS_FILE = os.path.join(TEMPLATES_DIR, "ps_program.txt")
@@ -27,7 +26,7 @@ class BehaviourWorkDeveloper(BaseBehaviour):
     category = BehaviourCategory.IDLE
     description = "Simulates developer activities"
 
-    def __init__(self, cleanup_manager: CleanupManager = None):
+    def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
         self.os_type = platform.system()
 

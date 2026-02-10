@@ -1,15 +1,16 @@
-import threading
-import time
-import socket
 import json
 import logging
+import socket
+import threading
+import time
 from enum import Enum
-from typing import Optional
+from typing import Any, MutableMapping, Optional, cast
 
 import requests
 import websocket
 
 from app_config import AppConfig, app_config, automation_config, save_app_config
+from behaviour.registry import BEHAVIOURS
 from behaviour_manager import BehaviourManager
 from json_encoder import EnumEncoder
 
@@ -28,12 +29,12 @@ class UserAutomationManager:
     Used to manage server config synchronization and behaviour execution
     """
 
-    def __init__(self, config: AppConfig = {}):
+    def __init__(self, config: AppConfig):
         # Use a single configuration source
         self.config: AppConfig = config
 
         # BehaviourManager automatically discovers available behaviours
-        self.behaviour_manager = BehaviourManager()
+        self.behaviour_manager = BehaviourManager(BEHAVIOURS)
 
         self.behaviour_cycle_thread = threading.Thread(
             target=self._run_behaviour_cycle, name="Behaviour cycle thread", daemon=True
@@ -117,7 +118,7 @@ class UserAutomationManager:
             self.websocket_connection.connect(ws_url)
 
             # Send authentication token
-            self.websocket_connection.send(self.access_token)
+            self.websocket_connection.send(str(self.access_token))
 
             logger.info("WebSocket connection established")
             return True
@@ -162,22 +163,16 @@ class UserAutomationManager:
         self.behaviour_manager.run_behaviour(behaviour_id, force)
         logger.info(f"Running behaviour: {behaviour_id}")
 
-    def _merge_config(self, new_config: dict):
-        """Merge new configuration with existing config and save to file"""
+    def _merge_config(self, new_config: dict[str, Any]):
         try:
-            # Deep merge the configuration
-            self._deep_merge_dict(self.config, new_config)
-
-            # Save to file
+            self._deep_merge_dict(cast(dict[str, Any], self.config), new_config)
             save_app_config(self.config)
-
             logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
-
         except Exception as e:
             logger.error(f"Error merging config: {e}")
             raise e
 
-    def _deep_merge_dict(self, target: dict, source: dict):
+    def _deep_merge_dict(self, target: MutableMapping[str, Any], source: MutableMapping[str, Any]):
         """Deep merge source dictionary into target dictionary"""
         for key, value in source.items():
             if key in target and isinstance(target[key], dict) and isinstance(value, dict):
@@ -189,14 +184,14 @@ class UserAutomationManager:
         """Update configuration for a specific behaviour and save to file"""
         try:
             # Ensure the nested structure exists
-            if "behaviour" not in self.config:
-                self.config["behaviour"] = {}
-            if "behaviours" not in self.config["behaviour"]:
-                self.config["behaviour"]["behaviours"] = {}
-            if behaviour_id not in self.config["behaviour"]["behaviours"]:
-                self.config["behaviour"]["behaviours"][behaviour_id] = {}
+            if "automation" not in self.config:
+                self.config["automation"] = {}
+            if "behaviours" not in self.config["automation"]:
+                self.config["automation"]["behaviours"] = {}
+            if behaviour_id not in self.config["automation"]["behaviours"]:
+                self.config["automation"]["behaviours"][behaviour_id] = {}
 
-            self.config["behaviour"]["behaviours"][behaviour_id] = behaviour_config
+            self.config["automation"]["behaviours"][behaviour_id] = behaviour_config
 
             save_app_config(self.config)
 
@@ -263,7 +258,7 @@ class UserAutomationManager:
                         message = self.websocket_connection.recv()
 
                         if message:
-                            self._handle_websocket_message(message)
+                            self._handle_websocket_message(str(message))
 
                     except websocket.WebSocketTimeoutException:
                         # Timeout is expected for non-blocking receive
@@ -307,9 +302,6 @@ class UserAutomationManager:
                     old_config = self.config.copy()
 
                 if config_changed:
-                    # Only reload if behaviour manager has this method
-                    if hasattr(self.behaviour_manager, "load_behaviour_queue"):
-                        self.behaviour_manager.load_behaviour_queue()
                     logger.info("Configuration changed - behaviour manager reloaded")
 
                 # Run next behaviour if cycle is running and no behaviour is currently active

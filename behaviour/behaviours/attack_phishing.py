@@ -1,6 +1,9 @@
 import platform
-import time
 import sys
+import time
+
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
 
 from app_config import app_config, automation_config
 from app_logger import app_logger
@@ -9,13 +12,9 @@ from behaviour.behaviour_cfg import get_behaviour_cfg
 from behaviour.models.behaviour import BehaviourCategory
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.selenium.email_web_client import EmailClientUser
+from behaviour.selenium.models.email_client import EmailClient
 from behaviour.selenium.selenium_controller import getSeleniumController
 from cleanup_manager import CleanupManager
-
-from behaviour.selenium.models.email_client import EmailClient
-
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 
 
 class BehaviourAttackPhishing(BaseBehaviour):
@@ -29,33 +28,30 @@ class BehaviourAttackPhishing(BaseBehaviour):
     category = BehaviourCategory.ATTACK
     description = "Attack phishing behaviour - opens phishing website from email"
 
-    def __init__(self, cleanup_manager: CleanupManager = None):
+    def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
 
-        if cleanup_manager is not None:
-            self.general_cfg = app_config["automation"]["general"]
-            self.behaviour_cfg = get_behaviour_cfg(self.id, app_config, required=True)
-            self.email_client_type = EmailClient(automation_config["general"]["email_client"])
-
-            is_o365 = self.email_client_type == EmailClient.O365
-            email_client_user: EmailClientUser = {
-                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
-                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
-                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
-            }
-
-            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-            self.email_client = self.selenium_controller.email_client
-        else:
-            self.general_cfg = None
-            self.user = None
-            self.behaviour_cfg = None
+        self.general_cfg = app_config["automation"]["general"]
+        self.user = self.general_cfg["user"]
+        self.behaviour_cfg = get_behaviour_cfg(self.id, True)
+        self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
     def _is_available(self) -> bool:
+        return False
         return platform.system() in ["Windows", "Linux", "Darwin"]
 
     def run_behaviour(self):
         app_logger.info("Starting attack_phishing behaviour")
+
+        is_o365 = self.email_client_type == EmailClient.O365
+        email_client_user: EmailClientUser = {
+            "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+            "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+            "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
+        }
+
+        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
+        self.email_client = self.selenium_controller.email_client
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
@@ -65,7 +61,7 @@ class BehaviourAttackPhishing(BaseBehaviour):
 
         BrowserUtils.search_by_url(self.general_cfg["organization_mail_server_url"])
 
-        self.email_client.login(self.user["domain_email"], self.user["domain_password"])
+        self.email_client.login()
 
         if self.email_client.type == EmailClient.ROUNDCUBE:
             self.selenium_controller.roundcube_set_language()

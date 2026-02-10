@@ -1,8 +1,10 @@
-import app_logger
+from typing import Optional
+
+from app_logger import app_logger
 
 
 class BehaviourException(Exception):
-    def __init__(self, msg: str, exception: Exception = None):
+    def __init__(self, msg: str, exception: Optional[Exception] = None):
         log_message = msg
         if exception is not None:
             log_message += f", Original Exception: {exception}"

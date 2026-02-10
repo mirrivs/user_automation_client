@@ -1,5 +1,5 @@
-import time
 import random
+import time
 from datetime import datetime
 
 from app_config import automation_config
@@ -7,14 +7,14 @@ from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
 from behaviour.behaviour_cfg import get_behaviour_cfg
 from behaviour.models.behaviour import BehaviourCategory
+from behaviour.models.behaviour_cfg import ProcrastinationCfg
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
-from cleanup_manager import CleanupManager
-
 from behaviour.selenium.models.email_client import EmailClient
 from behaviour.selenium.selenium_controller import (
     EmailClientUser,
     getSeleniumController,
 )
+from cleanup_manager import CleanupManager
 
 
 def weighted_random_choice(weights_dict):
@@ -48,25 +48,21 @@ class BehaviourProcrastination(BaseBehaviour):
     category = BehaviourCategory.IDLE
     description = "Simulates procrastination activities like browsing"
 
-    def __init__(self, cleanup_manager: CleanupManager = None):
+    def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
 
-        if cleanup_manager is not None:
-            self.user = automation_config["general"]["user"]
-            self.behaviour_cfg = get_behaviour_cfg("procrastination")
-            self.email_client_type = EmailClient(automation_config["general"]["email_client"])
+        self.user = automation_config["general"]["user"]
+        self.behaviour_cfg: ProcrastinationCfg = get_behaviour_cfg("procrastination")
+        self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
-            is_o365 = self.email_client_type == EmailClient.O365
-            email_client_user: EmailClientUser = {
-                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
-                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
-                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
-            }
+        is_o365 = self.email_client_type == EmailClient.O365
+        email_client_user: EmailClientUser = {
+            "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+            "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+            "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
+        }
 
-            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-        else:
-            self.user = None
-            self.behaviour_cfg = None
+        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
 
     def _is_available(self) -> bool:
         return self.os_type in ["Windows", "Linux", "Darwin"]
@@ -104,7 +100,7 @@ class BehaviourProcrastination(BaseBehaviour):
                 time.sleep(2)
 
             scroll_duration = procrastination_time - (datetime.now() - start_time).total_seconds()
-            self.selenium_controller.procrastinate_scroll_images(scroll_duration)
+            self.selenium_controller.procrastinate_scroll_images(round(scroll_duration))
             time.sleep(2)
         else:
             app_logger.warning(f"Unknown procrastination preference: {selected_preference}")

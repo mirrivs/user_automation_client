@@ -55,7 +55,9 @@ class AutomationConfig(TypedDict):
 
 class App(TypedDict):
     user_automation_server_http: str
-    user_automation_server_socket: str
+    user_automation_server_websocket: str
+    server_reconnect_delay: int
+    server_max_reconnect_delay: int
 
 
 class AppConfig(TypedDict):

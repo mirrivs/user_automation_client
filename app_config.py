@@ -1,6 +1,7 @@
 import os
-from config_handler import load_config, save_config
+from typing import Any, Union, cast
 
+from config_handler import load_config, save_config
 from models.config import AppConfig, AutomationConfig
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
@@ -11,8 +12,8 @@ app_config: AppConfig = load_config(config_file)
 automation_config: AutomationConfig = app_config.get("automation", {})
 
 
-def save_app_config(config: dict):
-    save_config(config_file, config)
+def save_app_config(config: Union[AppConfig, dict[str, Any]]) -> None:
+    save_config(config_file, cast(dict[str, Any], config))
 
 
 def get_app_config() -> AppConfig:

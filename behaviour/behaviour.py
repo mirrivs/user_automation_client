@@ -2,9 +2,10 @@ import ctypes
 import platform
 import threading
 from typing import Callable
-from app_logger import app_logger
 
+from app_logger import app_logger
 from behaviour.models.behaviour import BehaviourCategory
+from cleanup_manager import CleanupManager
 
 
 class BaseBehaviour(threading.Thread):
@@ -24,12 +25,12 @@ class BaseBehaviour(threading.Thread):
     """
 
     # Class-level metadata - override in subclasses
-    id: str = None
-    display_name: str = None
+    id: str = "base"
+    display_name: str = "BaseBehaviour"
     category: BehaviourCategory = BehaviourCategory.IDLE
     description: str = ""
 
-    def __init__(self, cleanup_manager=None, *args, **kwargs):
+    def __init__(self, cleanup_manager: CleanupManager, *args, **kwargs):
         """
         Initialize the behaviour.
 

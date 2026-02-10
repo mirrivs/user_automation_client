@@ -3,14 +3,14 @@ import time
 
 from app_config import automation_config
 from app_logger import app_logger
+from behaviour.behaviour import BaseBehaviour, BehaviourCategory
 from behaviour.behaviour_cfg import get_behaviour_cfg
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.selenium.email_web_client import EmailClientUser
-from cleanup_manager import CleanupManager
-
 from behaviour.selenium.models.email_client import EmailClient
 from behaviour.selenium.selenium_controller import getSeleniumController
-from behaviour.behaviour import BaseBehaviour, BehaviourCategory
+from cleanup_manager import CleanupManager
+from email_manager.email_manager import EmailManager
 
 
 class BehaviourWorkEmails(BaseBehaviour):
@@ -24,35 +24,29 @@ class BehaviourWorkEmails(BaseBehaviour):
     category = BehaviourCategory.IDLE
     description = "Generates or responds to predefined email conversations"
 
-    def __init__(self, cleanup_manager: CleanupManager = None):
+    def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
 
-        if cleanup_manager is not None:
-            self.general_cfg = automation_config["general"]
-            self.user = self.general_cfg["user"]  # ← Fixed
-            self.behaviour_cfg = get_behaviour_cfg("work_emails")
-            self.email_client_type = EmailClient(self.general_cfg["email_client"])
-
-            is_o365 = self.email_client_type == EmailClient.O365
-            email_client_user: EmailClientUser = {
-                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
-                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
-                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
-            }
-
-            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-        else:
-            self.general_cfg = None
-            self.email_client_type = None
-            self.user = None
-            self.behaviour_cfg = None
-            self.email_manager = None
+        self.general_cfg = automation_config["general"]
+        self.user = self.general_cfg["user"]
+        self.behaviour_cfg = get_behaviour_cfg("work_emails")
+        self.email_client_type = EmailClient(self.general_cfg["email_client"])
 
     def _is_available(self) -> bool:
         return platform.system() in ["Windows", "Linux", "Darwin"]
 
     def run_behaviour(self):
         app_logger.info("Starting work_emails behaviour")
+
+        self.email_manager = EmailManager()
+        is_o365 = self.email_client_type == EmailClient.O365
+        email_client_user: EmailClientUser = {
+            "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+            "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+            "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
+        }
+
+        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
 
         email_client = self.selenium_controller.email_client
 

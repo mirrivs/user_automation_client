@@ -18,7 +18,7 @@ class BehaviourWorkWord(BaseBehaviour):
     category = BehaviourCategory.IDLE
     description = "Simulates work on Microsoft Word"
 
-    def __init__(self, cleanup_manager: CleanupManager = None):
+    def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
 
         if cleanup_manager is not None:
@@ -27,6 +27,7 @@ class BehaviourWorkWord(BaseBehaviour):
             self.user = None
 
     def _is_available(self) -> bool:
+        return False
         # Only available on Windows
         return self.os_type == "Windows"
 

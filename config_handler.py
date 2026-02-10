@@ -1,6 +1,8 @@
-import yaml
-import sys
 import os
+import sys
+from typing import Any
+
+import yaml
 
 
 def load_config(config_file: str):
@@ -13,11 +15,11 @@ def load_config(config_file: str):
             sys.exit(1)
 
 
-def save_config(config_file: str, config: dict):
+def save_config(path: str, config: dict[str, Any]) -> None:
     """
     Write new config to config file
     """
-    config_file = os.path.abspath(config_file)
+    config_file = os.path.abspath(path)
     with open(config_file, "w", encoding="utf-8") as stream:
         try:
             yaml.dump(config, stream, default_flow_style=False)

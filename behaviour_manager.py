@@ -1,39 +1,20 @@
 import os
+import platform
 import queue
 import random
-import platform
-from typing import Type, Union
+from typing import Optional, Type, Union
 
 from app_logger import app_logger
 
 # Import behaviour classes
 from behaviour.behaviour import BaseBehaviour
-from behaviour.behaviours.attack_phishing import BehaviourAttackPhishing
-from behaviour.behaviours.attack_ransomware import BehaviourAttackRansomware
-from behaviour.behaviours.attack_reverse_shell import BehaviourAttackReverseShell
-from behaviour.behaviours.procrastination import BehaviourProcrastination
-from behaviour.behaviours.work_developer import BehaviourWorkDeveloper
-from behaviour.behaviours.work_emails import BehaviourWorkEmails
-from behaviour.behaviours.work_organization_web import BehaviourWorkOrganizationWeb
-from behaviour.behaviours.work_word import BehaviourWorkWord
 from behaviour.models.behaviour import BehaviourCategory
+from behaviour.registry import BEHAVIOURS
 from cleanup_manager import CleanupManager
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
 config_file = os.path.join(parent_dir, "config.yml")
 os_type = platform.system()
-
-# Registry of all behaviour classes
-BEHAVIOUR_CLASSES: list[Type[BaseBehaviour]] = [
-    BehaviourAttackPhishing,
-    BehaviourAttackRansomware,
-    BehaviourAttackReverseShell,
-    BehaviourProcrastination,
-    BehaviourWorkDeveloper,
-    BehaviourWorkEmails,
-    BehaviourWorkOrganizationWeb,
-    BehaviourWorkWord,
-]
 
 
 class BehaviourManager:
@@ -44,21 +25,19 @@ class BehaviourManager:
     Uses behaviour instances directly instead of dictionaries for cleaner code.
     """
 
-    def __init__(self, behaviour_classes: list[Type[BaseBehaviour]] = None):
+    def __init__(self, behaviour_classes: list[Type[BaseBehaviour]] = BEHAVIOURS):
         """
         Initialize the BehaviourManager.
 
         Args:
             behaviour_classes: List of behaviour classes to manage.
-                               Defaults to BEHAVIOUR_CLASSES if not provided.
+                               Defaults to BEHAVIOURS if not provided.
         """
-        if behaviour_classes is None:
-            behaviour_classes = BEHAVIOUR_CLASSES
-
         # Store behaviour classes by id
         self._behaviour_classes: dict[str, Type[BaseBehaviour]] = {}
 
         # Store prototype instances for metadata (created with cleanup_manager=None)
+        cleanup_manager = CleanupManager()
         self._behaviour_prototypes: dict[str, BaseBehaviour] = {}
 
         # Track which behaviours are available
@@ -68,7 +47,7 @@ class BehaviourManager:
         for behaviour_class in behaviour_classes:
             try:
                 # Create prototype instance to check availability and get metadata
-                prototype = behaviour_class(cleanup_manager=None)
+                prototype = behaviour_class(cleanup_manager)
                 behaviour_id = prototype.id
 
                 self._behaviour_classes[behaviour_id] = behaviour_class
@@ -95,9 +74,9 @@ class BehaviourManager:
         # Runtime state
         self.behaviour_queue = queue.PriorityQueue()
         self.behaviour_history: list[str] = []
-        self.current_behaviour: BaseBehaviour = None
-        self.behaviour_thread: BaseBehaviour = None
-        self.cleanup_manager: CleanupManager = None
+        self.current_behaviour: Optional[BaseBehaviour] = None
+        self.behaviour_thread: Optional[BaseBehaviour] = None
+        self.cleanup_manager: Optional[CleanupManager] = None
 
         app_logger.info(
             f"BehaviourManager initialized with {len(self._available_behaviour_ids)} available behaviours: {self._available_behaviour_ids}"
@@ -152,7 +131,7 @@ class BehaviourManager:
         """
         self._check_thread_status()
 
-        if self.behaviour_thread is not None and not force:
+        if self.current_behaviour is not None and not force:
             app_logger.info(
                 f"Behaviour '{self.current_behaviour.id}' already running. "
                 f"Use force=True to stop it and start the new behaviour."
@@ -218,7 +197,7 @@ class BehaviourManager:
         """Terminates the currently running behaviour thread, if any."""
         try:
             if self.behaviour_thread is not None:
-                app_logger.info(f"Terminating behaviour: {self.current_behaviour.id}")
+                app_logger.info(f"Terminating behaviour: {self.behaviour_thread.id}")
 
                 if self.behaviour_thread.is_alive():
                     self.behaviour_thread.stop()
@@ -291,7 +270,7 @@ class BehaviourManager:
 
         except Exception as ex:
             app_logger.error(f"Error while evaluating behaviour: {ex}")
-            idle_behaviours = self.get_idle_behaviours()
+            idle_behaviours = self.list_behaviours_by_category(BehaviourCategory.IDLE)
             return idle_behaviours[0].id if idle_behaviours else None
 
     def get_behaviour(self, behaviour_id: str) -> Union[BaseBehaviour, None]:
@@ -324,10 +303,6 @@ class BehaviourManager:
         self.behaviour_queue.put((priority, behaviour_id))
         app_logger.info(f"Queued behaviour '{behaviour_id}' with priority {priority}")
 
-    def list_available_behaviours(self) -> list[str]:
-        """Get a list of all available behaviour IDs."""
-        return self._available_behaviour_ids.copy()
-
-    def list_behaviours_by_category(self, category: BehaviourCategory) -> list[str]:
+    def list_behaviours_by_category(self, category: BehaviourCategory) -> list[BaseBehaviour]:
         """Get a list of behaviour IDs for a specific category."""
-        return [b.id for b in self._behaviours_by_category.get(category, [])]
+        return [b for b in self._behaviours_by_category.get(category, [])]

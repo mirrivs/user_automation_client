@@ -1,23 +1,21 @@
 import time
-import pyautogui as pag
 
+import pyautogui as pag
+from selenium.webdriver.common.by import By
+
+from app_config import automation_config
+from app_logger import app_logger
+from behaviour.behaviour import BaseBehaviour, BehaviourCategory
 from behaviour.behaviour_cfg import get_behaviour_cfg
 from behaviour.models.behaviour_cfg import AttackReverseShellCfg
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.scripts_pyautogui.win_utils import win_utils
-from cleanup_manager import CleanupManager
 from behaviour.selenium.models.email_client import EmailClient
-
-from app_config import automation_config
-from app_logger import app_logger
-
 from behaviour.selenium.selenium_controller import (
     EmailClientUser,
     getSeleniumController,
 )
-from behaviour.behaviour import BaseBehaviour, BehaviourCategory
-
-from selenium.webdriver.common.by import By
+from cleanup_manager import CleanupManager
 
 
 class BehaviourAttackReverseShell(BaseBehaviour):
@@ -31,7 +29,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
     category = BehaviourCategory.ATTACK
     description = "Reverse shell attack - downloads and opens malicious attachment from email"
 
-    def __init__(self, cleanup_manager: CleanupManager = None):
+    def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
 
         if cleanup_manager is not None:
@@ -52,6 +50,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
             self.behaviour_cfg = None
 
     def _is_available(self) -> bool:
+        return False
         return self.os_type in ["Windows", "Linux"]
 
     def run_behaviour(self):
