@@ -72,7 +72,7 @@ class BehaviourWorkEmails(BaseBehaviour):
 
         responded_count = email_client.reply_to_emails(unread_emails)
 
-        if not responded_count and self.general_cfg.get("is_conversation_starter", False):
+        if not responded_count and self.behaviour_cfg.get("is_conversation_starter", False):
             email_receivers = self.behaviour_cfg.get("email_receivers")
             if not email_receivers:
                 app_logger.warning(
