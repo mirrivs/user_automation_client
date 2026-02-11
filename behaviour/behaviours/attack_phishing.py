@@ -10,6 +10,7 @@ from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
 from behaviour.behaviour_cfg import get_behaviour_cfg
 from behaviour.models.behaviour import BehaviourCategory
+from behaviour.models.behaviour_cfg import AttackPhishingCfg
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.selenium.email_web_client import EmailClientUser
 from behaviour.selenium.models.email_client import EmailClient
@@ -41,8 +42,8 @@ class BehaviourAttackPhishing(BaseBehaviour):
         return platform.system() in ["Windows", "Linux", "Darwin"]
 
     def run_behaviour(self):
-        app_logger.info("Starting attack_phishing behaviour")
-        self.behaviour_cfg = get_behaviour_cfg(self.id, True)
+        app_logger.info(f"Starting {self.id} behaviour")
+        self.behaviour_cfg = get_behaviour_cfg(self.id, AttackPhishingCfg, True)
 
         is_o365 = self.email_client_type == EmailClient.O365
         email_client_user: EmailClientUser = {
@@ -115,4 +116,4 @@ class BehaviourAttackPhishing(BaseBehaviour):
             app_logger.error("No phishing link found")
             sys.exit(1)
 
-        app_logger.info("Completed attack_phishing behaviour")
+        app_logger.info(f"Completed {self.id} behaviour")

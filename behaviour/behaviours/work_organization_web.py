@@ -23,7 +23,7 @@ class BehaviourWorkOrganizationWeb(BaseBehaviour):
         self.email_client_type = EmailClient(self.general_config["email_client"])
 
     def run_behaviour(self):
-        app_logger.info("Starting work_organization_web behaviour")
+        app_logger.info(f"Starting {self.id} behaviour")
 
         # Create Selenium controller only when actually running
         is_o365 = self.email_client_type == EmailClient.O365
@@ -44,4 +44,4 @@ class BehaviourWorkOrganizationWeb(BaseBehaviour):
         time.sleep(4)
 
         self.selenium_controller.browse_organization_website(45)
-        app_logger.info("Completed work_organization_web behaviour")
+        app_logger.info(f"Completed {self.id} behaviour")

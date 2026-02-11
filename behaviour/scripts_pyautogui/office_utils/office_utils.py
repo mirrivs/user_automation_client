@@ -6,18 +6,18 @@ Prerequisites:
     - MS Office installed
 """
 
+import os
 import sys
 import time
-import os
-import pyautogui as pag
 
+import pyautogui as pag
 
 from app_logger import app_logger
 
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 
 
-def start_app(app="word"):
+def start_app(app: str):
     """
     Open app\n
     """
@@ -56,6 +56,10 @@ def start_app(app="word"):
     except Exception as ex:
         app_logger.error(f"Error starting {app.capitalize()} app, Ex: {ex}")
         sys.exit(1)
+
+
+def close_app(app: str):
+    print("Closing the app")
 
 
 def check_license_agreement():

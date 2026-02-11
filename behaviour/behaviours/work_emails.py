@@ -5,6 +5,7 @@ from app_config import automation_config
 from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour, BehaviourCategory
 from behaviour.behaviour_cfg import get_behaviour_cfg
+from behaviour.models.behaviour_cfg import WorkEmailsCfg
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.selenium.email_web_client import EmailClientUser
 from behaviour.selenium.models.email_client import EmailClient
@@ -29,7 +30,7 @@ class BehaviourWorkEmails(BaseBehaviour):
 
         self.general_cfg = automation_config["general"]
         self.user = self.general_cfg["user"]
-        self.behaviour_cfg = get_behaviour_cfg(self.id)
+        self.behaviour_cfg = get_behaviour_cfg(self.id, WorkEmailsCfg)
         self.email_client_type = EmailClient(self.general_cfg["email_client"])
 
     @classmethod

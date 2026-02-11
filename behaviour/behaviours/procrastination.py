@@ -52,7 +52,7 @@ class BehaviourProcrastination(BaseBehaviour):
         super().__init__(cleanup_manager)
 
         self.user = automation_config["general"]["user"]
-        self.behaviour_cfg: ProcrastinationCfg = get_behaviour_cfg("procrastination")
+        self.behaviour_cfg = get_behaviour_cfg(self.id, ProcrastinationCfg)
         self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
     @classmethod

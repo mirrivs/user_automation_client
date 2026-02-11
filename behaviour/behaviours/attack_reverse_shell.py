@@ -33,7 +33,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
         super().__init__(cleanup_manager)
 
         self.user = automation_config["general"]["user"]
-        self.behaviour_cfg: AttackReverseShellCfg = get_behaviour_cfg(self.id)
+        self.behaviour_cfg: AttackReverseShellCfg = get_behaviour_cfg(self.id, AttackReverseShellCfg, True)
 
     @classmethod
     def is_available(cls) -> bool:

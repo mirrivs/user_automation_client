@@ -8,6 +8,7 @@ from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
 from behaviour.behaviour_cfg import get_behaviour_cfg
 from behaviour.models.behaviour import BehaviourCategory
+from behaviour.models.behaviour_cfg import AttackRansomwareCfg
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils, EdgeUtils
 from behaviour.scripts_pyautogui.os_utils import os_utils
 from behaviour.scripts_pyautogui.win_utils import win_utils
@@ -33,6 +34,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
 
         self.user = automation_config["general"]["user"]
         self.email_client_type = EmailClient(automation_config["general"]["email_client"])
+        self.behaviour_cfg = get_behaviour_cfg(self.id, AttackRansomwareCfg, True)
 
     @classmethod
     def is_available(cls) -> bool:
@@ -40,8 +42,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
         return cls.os_type in ["Windows", "Linux"]
 
     def run_behaviour(self):
-        app_logger.info("Starting attack_ransomware behaviour")
-        self.behaviour_cfg = get_behaviour_cfg("attack_ransomware")
+        app_logger.info(f"Starting {self.id} behaviour")
         is_o365 = self.email_client_type == EmailClient.O365
         email_client_user: EmailClientUser = {
             "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
@@ -81,7 +82,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
             if subject_link.text == self.behaviour_cfg["malicious_email_subject"]:
                 subject_link.click()
                 break
-
+        downloaded_attachments = []
         if self.email_client_type == "roundcube":
             iframe = self.selenium_controller.driver.find_element(By.NAME, "messagecontframe")
             time.sleep(1)
@@ -126,4 +127,4 @@ class BehaviourAttackRansomware(BaseBehaviour):
                     time.sleep(0.5)
                     pag.press("enter")
 
-        app_logger.info("Completed attack_ransomware behaviour")
+        app_logger.info(f"Completed {self.id} behaviour")

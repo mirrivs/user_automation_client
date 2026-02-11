@@ -16,17 +16,17 @@ from behaviour.selenium.selenium_controller import getSeleniumController
 from cleanup_manager import CleanupManager
 
 
-class BehaviourWorkExcel(BaseBehaviour):
+class BehaviourWorkPowerpoint(BaseBehaviour):
     """
-    Behaviour for working with Microsoft Word.
+    Behaviour for working with Microsoft Powerpoint.
     NOTE: This behaviour is currently unfinished.
     """
 
     # Class-level metadata
-    id = "work_excel"
-    display_name = "Work Excel"
+    id = "work_powerpoint"
+    display_name = "Work Powerpoint"
     category = BehaviourCategory.IDLE
-    description = "Simulates work on Microsoft Excel"
+    description = "Simulates work on Microsoft Powerpoint"
 
     def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
@@ -38,7 +38,7 @@ class BehaviourWorkExcel(BaseBehaviour):
 
     @classmethod
     def is_available(cls) -> bool:
-        return cls.os_type in ["Windows"]
+        return cls.os_type == "Windows"
 
     def run_behaviour(self):
         app_logger.info(f"Starting {self.id} behaviour")
@@ -67,7 +67,8 @@ class BehaviourWorkExcel(BaseBehaviour):
         self.selenium_controller.maximize_driver_window()
         time.sleep(4)
 
-        BrowserUtils.search_by_url("https://excel.cloud.microsoft/")
+        BrowserUtils.search_by_url("https://powerpoint.cloud.microsoft/")
+
         time.sleep(3)
 
         self.selenium_controller.wait(5).until(
@@ -77,5 +78,5 @@ class BehaviourWorkExcel(BaseBehaviour):
         email_client.login()
 
     def local_behaviour(self):
-        self.cleanup_manager.add_cleanup_task(lambda: office_utils.close_app("excel"))
-        office_utils.start_app("excel")
+        self.cleanup_manager.add_cleanup_task(lambda: office_utils.close_app("powerpoint"))
+        office_utils.start_app("powerpoint")
