@@ -4,20 +4,19 @@ import time
 from typing import Optional
 
 import pyautogui as pag
-from selenium import webdriver
+import selenium.webdriver as webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.select import Select
 
 from app_logger import app_logger
 from behaviour.models.exceptions import BehaviourException
+from behaviour.selenium.driver_type import DriverType
 from behaviour.selenium.email_web_client import (
+    BaseEmailWebClient,
     EmailClientUser,
-    O365Client,
-    OutlookWebAccessClient,
-    RoundcubeClient,
     getEmailClient,
 )
 from behaviour.selenium.models.email_client import EmailClient
@@ -25,26 +24,25 @@ from behaviour.selenium.selenium_driver import SeleniumDriver
 
 
 class SeleniumController(SeleniumDriver):
-    def __init__(self, driver: webdriver, user: EmailClientUser, email_client_type: Optional[EmailClient] = None):
+    def __init__(self, driver: DriverType, user: EmailClientUser, email_client_type: Optional[EmailClient] = None):
         super().__init__(driver)
         if email_client_type is not None:
-            self.email_client: OutlookWebAccessClient | RoundcubeClient | O365Client = getEmailClient(
-                email_client_type
-            )(driver, user)
+            self.email_client: BaseEmailWebClient = getEmailClient(email_client_type)(driver, user)
 
     def switch_tab(self):
-        """
-        Switch to the next tab in browser
-        """
+        """Switch to the next tab in browser"""
         original_window = self.driver.current_window_handle
         windows = self.driver.window_handles
+
+        new_window = None
         for window in windows:
             if window != original_window:
                 new_window = window
                 break
 
-        if not new_window:
+        if new_window is None:
             raise BehaviourException("Could not find new tab")
+
         self.driver.switch_to.window(new_window)
 
     def phishing_enter_credentials(self, email: str, password: str):
@@ -393,7 +391,7 @@ class EdgeSeleniumController(SeleniumController):
         options.add_argument("--ignore-ssl-errors=yes")
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--enable-chrome-browser-cloud-management")
-        super().__init__(webdriver.Edge(options=options), email_client_type, user)
+        super().__init__(webdriver.Edge(options=options), user, email_client_type)
 
 
 class FirefoxSeleniumController(SeleniumController):
@@ -408,7 +406,7 @@ class FirefoxSeleniumController(SeleniumController):
         options.set_preference("acceptInsecureCerts", True)
         options.add_argument("--start-maximized")
         options.add_argument("--ignore-certificate-errors")
-        super().__init__(webdriver.Firefox(options=options), email_client_type, user)
+        super().__init__(webdriver.Firefox(options=options), user, email_client_type)
 
 
 def getSeleniumController(email_client: EmailClient, user: EmailClientUser):

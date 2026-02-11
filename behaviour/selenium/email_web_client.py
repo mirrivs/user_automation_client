@@ -1,5 +1,5 @@
 import time
-from typing import List, TypedDict, Union
+from typing import List, TypedDict
 
 import jinja2
 import pyautogui as pag
@@ -8,7 +8,6 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
 )
-from selenium.webdriver import Edge, Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -16,6 +15,7 @@ from selenium.webdriver.support.select import Select
 
 from app_logger import app_logger
 from behaviour.models.exceptions import BehaviourException
+from behaviour.selenium.driver_type import DriverType
 from behaviour.selenium.models.email_client import EmailClient
 from behaviour.selenium.selenium_driver import SeleniumDriver
 from email_manager.email_manager import EmailManager
@@ -25,9 +25,6 @@ class EmailClientUser(TypedDict):
     name: str
     email: str
     password: str
-
-
-DriverType = Union[Firefox, Edge]
 
 
 class BaseEmailWebClient(SeleniumDriver):
@@ -759,7 +756,7 @@ class RoundcubeClient(BaseEmailWebClient):
 
 def getEmailClient(
     email_client: str | EmailClient,
-) -> OutlookWebAccessClient | RoundcubeClient | O365Client:
+) -> type[BaseEmailWebClient]:
     email_client_mapping = {
         EmailClient.ROUNDCUBE: RoundcubeClient,
         EmailClient.OWA: OutlookWebAccessClient,
