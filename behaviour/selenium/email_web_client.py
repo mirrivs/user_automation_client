@@ -472,26 +472,26 @@ class O365Client(BaseEmailWebClient):
             email_body = jinja2.Template(email_body).render(sender_name=self.user["name"], receiver_name=receiver_name)
 
             self.wait().until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Write a new message')]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'New mail')]"))
             ).click()
 
             time.sleep(2)
 
-            self.driver.find_element(By.XPATH, "//input[contains(@aria-label, 'To')]").click()
+            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'To')]"))).click()
             for receiver in receivers:
                 time.sleep(0.5)
                 pyperclip.copy(receiver)
                 pag.hotkey("ctrl", "v")
             time.sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Add a subject']"))).click()
+            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Subject']"))).click()
 
             time.sleep(0.5)
             pyperclip.copy(subject)
             pag.hotkey("ctrl", "v")
             time.sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//textarea[@name='_message']"))).click()
+            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//div[@aria-label='Message body']"))).click()
 
             # Click on message textarea field and copy-paste the message
             time.sleep(0.5)
@@ -500,7 +500,7 @@ class O365Client(BaseEmailWebClient):
             time.sleep(1)
 
             # Click send button
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))).click()
+            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send']"))).click()
             time.sleep(1)
 
         except Exception as ex:

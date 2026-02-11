@@ -60,6 +60,10 @@ class UserAutomationManager:
         try:
             username = automation_config["general"]["user"]["domain_email"]
             password = automation_config["general"]["user"]["domain_password"]
+            if automation_config["general"]["enable_o365"]:
+                username = automation_config["general"]["user"]["o365_email"]
+                password = automation_config["general"]["user"]["o365_password"]
+
             hostname = socket.gethostname()
 
             if not username or not password:
