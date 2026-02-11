@@ -55,6 +55,7 @@ class AutomationConfig(TypedDict):
 
 
 class App(TypedDict):
+    landscape_id: int
     user_automation_server_http: str
     user_automation_server_websocket: str
     server_reconnect_delay: int

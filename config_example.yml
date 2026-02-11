@@ -1,5 +1,5 @@
 app:
-  landscape: "8"
+  landscape_id: 8
   user_automation_server_http: "http://192.168.7.2:8080"
   user_automation_server_websocket: "ws://192.168.7.2:8080"
   server_reconnect_delay: 5

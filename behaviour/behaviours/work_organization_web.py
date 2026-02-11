@@ -22,6 +22,10 @@ class BehaviourWorkOrganizationWeb(BaseBehaviour):
         self.user = self.general_config["user"]
         self.email_client_type = EmailClient(self.general_config["email_client"])
 
+    @classmethod
+    def is_available(cls) -> bool:
+        return cls.os_type in ["Windows"] and cls.landscape_id not in [8]
+
     def run_behaviour(self):
         app_logger.info(f"Starting {self.id} behaviour")
 

@@ -3,6 +3,7 @@ import platform
 import threading
 from typing import Callable
 
+from app_config import app_config
 from app_logger import app_logger
 from behaviour.models.behaviour import BehaviourCategory
 from cleanup_manager import CleanupManager
@@ -32,6 +33,7 @@ class BaseBehaviour(threading.Thread):
 
     # Store system info
     os_type: str = platform.system()
+    landscape_id = app_config["app"]["landscape_id"]
 
     def __init__(self, cleanup_manager: CleanupManager, *args, **kwargs):
         """
