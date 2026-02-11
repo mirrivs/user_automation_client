@@ -32,29 +32,27 @@ class BehaviourAttackReverseShell(BaseBehaviour):
     def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
 
-        if cleanup_manager is not None:
-            self.user = automation_config["general"]["user"]
-            self.behaviour_cfg: AttackReverseShellCfg = get_behaviour_cfg("attack_reverse_shell")
-            self.email_client_type = EmailClient(automation_config["general"]["email_client"])
+        self.user = automation_config["general"]["user"]
+        self.behaviour_cfg: AttackReverseShellCfg = get_behaviour_cfg(self.id)
 
-            is_o365 = self.email_client_type == EmailClient.O365
-            email_client_user: EmailClientUser = {
-                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
-                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
-                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
-            }
-
-            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-        else:
-            self.user = None
-            self.behaviour_cfg = None
-
-    def _is_available(self) -> bool:
+    @classmethod
+    def is_available(cls) -> bool:
         return False
-        return self.os_type in ["Windows", "Linux"]
+        return cls.os_type in ["Windows", "Linux"]
 
     def run_behaviour(self):
-        app_logger.info("Starting attack_reverse_shell behaviour")
+        app_logger.info(f"Starting {self.id} behaviour")
+
+        self.email_client_type = EmailClient(automation_config["general"]["email_client"])
+
+        is_o365 = self.email_client_type == EmailClient.O365
+        email_client_user: EmailClientUser = {
+            "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+            "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+            "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
+        }
+
+        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
@@ -65,14 +63,14 @@ class BehaviourAttackReverseShell(BaseBehaviour):
         BrowserUtils.search_by_url(automation_config["general"]["organization_mail_server_url"])
         time.sleep(4)
 
-        self.selenium_controller.email_client.login(self.user["domain_email"], self.user["domain_password"])
+        self.selenium_controller.email_client.login()
 
         if self.email_client_type == "roundcube":
             self.selenium_controller.roundcube_set_language()
 
         time.sleep(4)
 
-        unread_emails = self.selenium_controller.get_unread_emails()
+        unread_emails = self.selenium_controller.email_client.get_unread_emails()
 
         for email in unread_emails:
             subject_link = None

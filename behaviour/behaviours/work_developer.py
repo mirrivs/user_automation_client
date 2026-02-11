@@ -37,7 +37,8 @@ class BehaviourWorkDeveloper(BaseBehaviour):
             self.user = None
             self.filename = None
 
-    def _is_available(self) -> bool:
+    @classmethod
+    def is_available(cls) -> bool:
         return False
 
     def run_behaviour(self):

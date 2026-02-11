@@ -26,10 +26,9 @@ class BehaviourWorkWord(BaseBehaviour):
         else:
             self.user = None
 
-    def _is_available(self) -> bool:
-        return False
-        # Only available on Windows
-        return self.os_type == "Windows"
+    @classmethod
+    def is_available(cls) -> bool:
+        return cls.os_type == "Windows"
 
     def run_behaviour(self):
         app_logger.info("Starting work_word behaviour")

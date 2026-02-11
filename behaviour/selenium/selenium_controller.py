@@ -1,15 +1,18 @@
 import platform
 import random
 import time
+from typing import Optional
+
 import pyautogui as pag
-
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
 
+from app_logger import app_logger
+from behaviour.models.exceptions import BehaviourException
 from behaviour.selenium.email_web_client import (
     EmailClientUser,
     O365Client,
@@ -17,19 +20,17 @@ from behaviour.selenium.email_web_client import (
     RoundcubeClient,
     getEmailClient,
 )
-
-from app_logger import app_logger
-from behaviour.models.exceptions import BehaviourException
-from behaviour.selenium.selenium_driver import SeleniumDriver
 from behaviour.selenium.models.email_client import EmailClient
+from behaviour.selenium.selenium_driver import SeleniumDriver
 
 
 class SeleniumController(SeleniumDriver):
-    def __init__(self, driver: webdriver, email_client_type: EmailClient, user: EmailClientUser):
+    def __init__(self, driver: webdriver, user: EmailClientUser, email_client_type: Optional[EmailClient] = None):
         super().__init__(driver)
-        self.email_client: OutlookWebAccessClient | RoundcubeClient | O365Client = getEmailClient(email_client_type)(
-            driver, user
-        )
+        if email_client_type is not None:
+            self.email_client: OutlookWebAccessClient | RoundcubeClient | O365Client = getEmailClient(
+                email_client_type
+            )(driver, user)
 
     def switch_tab(self):
         """

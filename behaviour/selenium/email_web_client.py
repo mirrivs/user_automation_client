@@ -1,22 +1,21 @@
 import time
+from typing import List, TypedDict, Union
+
 import jinja2
 import pyautogui as pag
-
-
-from typing import List, TypedDict
 import pyperclip
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
 )
-from selenium.webdriver.support.ui import Select
-
+from selenium.webdriver import Edge, Firefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.select import Select
 
 from app_logger import app_logger
+from behaviour.models.exceptions import BehaviourException
 from behaviour.selenium.models.email_client import EmailClient
 from behaviour.selenium.selenium_driver import SeleniumDriver
 from email_manager.email_manager import EmailManager
@@ -28,8 +27,11 @@ class EmailClientUser(TypedDict):
     password: str
 
 
+DriverType = Union[Firefox, Edge]
+
+
 class BaseEmailWebClient(SeleniumDriver):
-    def __init__(self, driver: webdriver, user: EmailClientUser):
+    def __init__(self, driver: DriverType, user: EmailClientUser):
         self.driver = driver
         self.user = user
         self.email_manager = EmailManager()
@@ -44,10 +46,10 @@ class BaseEmailWebClient(SeleniumDriver):
     def get_unread_emails(self):
         raise NotImplementedError()
 
-    def send_email(self):
+    def send_email(self, receivers: list[str], subject: str, email_body: str):
         raise NotImplementedError()
 
-    def reply_to_email(self):
+    def reply_to_email(self, subject: str, email_body: str):
         raise NotImplementedError()
 
     def reply_to_emails(self, email_list: List[WebElement] | list) -> int:
@@ -122,7 +124,7 @@ class BaseEmailWebClient(SeleniumDriver):
 
 
 class OutlookWebAccessClient(BaseEmailWebClient):
-    def __init__(self, driver: webdriver, user: EmailClientUser):
+    def __init__(self, driver: DriverType, user: EmailClientUser):
         super().__init__(driver, user)
         self.type = EmailClient.OWA
 
@@ -210,7 +212,7 @@ class OutlookWebAccessClient(BaseEmailWebClient):
         except Exception as ex:
             raise BehaviourException("Error trying to get emails", ex)
 
-    def send_email(self, receivers, subject, email_body):
+    def send_email(self, receivers: list[str], subject: str, email_body: str):
         """
         Writes and sends email\n
         Prerequisites:
@@ -257,7 +259,7 @@ class OutlookWebAccessClient(BaseEmailWebClient):
         except Exception as ex:
             raise BehaviourException(f"Error sending email '{subject}' to {receivers}", ex)
 
-    def reply_to_email(self, subject, email_body):
+    def reply_to_email(self, subject: str, email_body: str):
         """
         Respond to an email based on the conversation\n
         Prerequisites:
@@ -335,7 +337,7 @@ class OutlookWebAccessClient(BaseEmailWebClient):
 
 
 class O365Client(BaseEmailWebClient):
-    def __init__(self, driver: webdriver, user: EmailClientUser):
+    def __init__(self, driver: DriverType, user: EmailClientUser):
         super().__init__(driver, user)
         self.type = EmailClient.O365
 
@@ -460,7 +462,7 @@ class O365Client(BaseEmailWebClient):
         except Exception as ex:
             raise BehaviourException("Error trying to get emails", ex)
 
-    def send_email(self, receivers, subject, email_body):
+    def send_email(self, receivers, subject: str, email_body: str):
         """
         Writes and sends email\n
         Prerequisites:
@@ -507,7 +509,7 @@ class O365Client(BaseEmailWebClient):
         except Exception as ex:
             raise BehaviourException(f"Error sending email '{subject}' to {receivers}", ex)
 
-    def reply_to_email(self, subject, email_body):
+    def reply_to_email(self, subject: str, email_body: str):
         """
         Respond to an email based on the conversation\n
         Prerequisites:
@@ -589,7 +591,7 @@ class O365Client(BaseEmailWebClient):
 
 
 class RoundcubeClient(BaseEmailWebClient):
-    def __init__(self, driver: webdriver, user: EmailClientUser):
+    def __init__(self, driver: DriverType, user: EmailClientUser):
         super().__init__(driver, user)
         self.type = EmailClient.ROUNDCUBE
 
@@ -645,7 +647,7 @@ class RoundcubeClient(BaseEmailWebClient):
         except Exception as ex:
             raise BehaviourException("Error trying to get emails", ex)
 
-    def send_email(self, receivers, subject, email_body):
+    def send_email(self, receivers, subject: str, email_body: str):
         """
         Writes and sends email\n
         Prerequisites:
@@ -692,7 +694,7 @@ class RoundcubeClient(BaseEmailWebClient):
         except Exception as ex:
             raise BehaviourException(f"Error sending email '{subject}' to {receivers}", ex)
 
-    def reply_to_email(self, subject, email_body):
+    def reply_to_email(self, subject: str, email_body: str):
         """
         Respond to an email based on the conversation\n
         Prerequisites:

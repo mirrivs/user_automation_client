@@ -55,6 +55,13 @@ class BehaviourProcrastination(BaseBehaviour):
         self.behaviour_cfg: ProcrastinationCfg = get_behaviour_cfg("procrastination")
         self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
+    @classmethod
+    def is_available(cls) -> bool:
+        return cls.os_type in ["Windows", "Linux", "Darwin"]
+
+    def run_behaviour(self):
+        app_logger.info(f"Starting {self.id} behaviour")
+
         is_o365 = self.email_client_type == EmailClient.O365
         email_client_user: EmailClientUser = {
             "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
@@ -63,12 +70,6 @@ class BehaviourProcrastination(BaseBehaviour):
         }
 
         self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-
-    def _is_available(self) -> bool:
-        return self.os_type in ["Windows", "Linux", "Darwin"]
-
-    def run_behaviour(self):
-        app_logger.info("Starting procrastination behaviour")
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
@@ -105,4 +106,4 @@ class BehaviourProcrastination(BaseBehaviour):
         else:
             app_logger.warning(f"Unknown procrastination preference: {selected_preference}")
 
-        app_logger.info("Completed procrastination behaviour")
+        app_logger.info(f"Completed {self.id} behaviour")

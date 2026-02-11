@@ -33,15 +33,16 @@ class BehaviourAttackPhishing(BaseBehaviour):
 
         self.general_cfg = app_config["automation"]["general"]
         self.user = self.general_cfg["user"]
-        self.behaviour_cfg = get_behaviour_cfg(self.id, True)
         self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
-    def _is_available(self) -> bool:
+    @classmethod
+    def is_available(cls) -> bool:
         return False
         return platform.system() in ["Windows", "Linux", "Darwin"]
 
     def run_behaviour(self):
         app_logger.info("Starting attack_phishing behaviour")
+        self.behaviour_cfg = get_behaviour_cfg(self.id, True)
 
         is_o365 = self.email_client_type == EmailClient.O365
         email_client_user: EmailClientUser = {

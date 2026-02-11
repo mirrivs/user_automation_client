@@ -1,5 +1,7 @@
 import time
+
 import pyautogui as pag
+from selenium.webdriver.common.by import By
 
 from app_config import automation_config
 from app_logger import app_logger
@@ -10,12 +12,9 @@ from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.scripts_pyautogui.os_utils import os_utils
 from behaviour.scripts_pyautogui.win_utils import win_utils
 from behaviour.selenium.email_web_client import EmailClientUser
+from behaviour.selenium.models.email_client import EmailClient
 from behaviour.selenium.selenium_controller import getSeleniumController
 from cleanup_manager import CleanupManager
-
-from behaviour.selenium.models.email_client import EmailClient
-
-from selenium.webdriver.common.by import By
 
 
 class BehaviourAttackRansomware(BaseBehaviour):
@@ -29,31 +28,28 @@ class BehaviourAttackRansomware(BaseBehaviour):
     category = BehaviourCategory.ATTACK
     description = "Ransomware attack - downloads and opens malicious email attachment"
 
-    def __init__(self, cleanup_manager: CleanupManager = None):
+    def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
 
-        if cleanup_manager is not None:
-            self.user = automation_config["general"]["user"]
-            self.behaviour_cfg = get_behaviour_cfg("attack_ransomware")
-            self.email_client_type = EmailClient(automation_config["general"]["email_client"])
+        self.user = automation_config["general"]["user"]
+        self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
-            is_o365 = self.email_client_type == EmailClient.O365
-            email_client_user: EmailClientUser = {
-                "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
-                "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
-                "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
-            }
-
-            self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-        else:
-            self.user = None
-            self.behaviour_cfg = None
-
-    def _is_available(self) -> bool:
-        return self.os_type in ["Windows", "Linux"]
+    @classmethod
+    def is_available(cls) -> bool:
+        return False
+        return cls.os_type in ["Windows", "Linux"]
 
     def run_behaviour(self):
         app_logger.info("Starting attack_ransomware behaviour")
+        self.behaviour_cfg = get_behaviour_cfg("attack_ransomware")
+        is_o365 = self.email_client_type == EmailClient.O365
+        email_client_user: EmailClientUser = {
+            "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
+            "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
+            "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
+        }
+
+        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
@@ -61,17 +57,17 @@ class BehaviourAttackRansomware(BaseBehaviour):
         self.selenium_controller.maximize_driver_window()
         time.sleep(4)
 
-        BrowserUtils.search_by_url(self.user["roundcube_url"])
+        BrowserUtils.search_by_url(automation_config["general"]["organization_mail_server_url"])
         time.sleep(4)
 
-        self.selenium_controller.email_client_login(self.user["domain_email"], self.user["domain_password"])
+        self.selenium_controller.email_client.login()
 
         if self.email_client_type == "roundcube":
             self.selenium_controller.roundcube_set_language()
 
         time.sleep(4)
 
-        unread_emails = self.selenium_controller.get_unread_emails()
+        unread_emails = self.selenium_controller.email_client.get_unread_emails()
 
         for email in unread_emails:
             subject_link = None

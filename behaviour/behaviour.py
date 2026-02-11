@@ -30,6 +30,9 @@ class BaseBehaviour(threading.Thread):
     category: BehaviourCategory = BehaviourCategory.IDLE
     description: str = ""
 
+    # Store system info
+    os_type: str = platform.system()
+
     def __init__(self, cleanup_manager: CleanupManager, *args, **kwargs):
         """
         Initialize the behaviour.
@@ -44,9 +47,6 @@ class BaseBehaviour(threading.Thread):
             self.id = self.__class__.__name__
         if self.display_name is None:
             self.display_name = self.id
-
-        # Store system info
-        self.os_type = platform.system()
 
         # Cleanup management
         self.cleanup_manager = cleanup_manager

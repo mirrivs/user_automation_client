@@ -53,7 +53,7 @@ class BehaviourManager:
                 self._behaviour_classes[behaviour_id] = behaviour_class
                 self._behaviour_prototypes[behaviour_id] = prototype
 
-                if prototype.is_available:
+                if prototype.is_available and prototype.is_available():
                     self._available_behaviour_ids.append(behaviour_id)
                     app_logger.debug(f"Behaviour '{behaviour_id}' is available")
                 else:

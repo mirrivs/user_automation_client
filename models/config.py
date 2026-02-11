@@ -15,6 +15,7 @@ class IdleCycle(TypedDict):
 
 
 class General(TypedDict):
+    enable_o365: bool
     email_client: EmailClient
     user: User
     is_conversation_starter: bool
