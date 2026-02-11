@@ -75,7 +75,15 @@ class BehaviourWorkWord(BaseBehaviour):
             EC.presence_of_element_located((By.XPATH, "//button[text()='Sign in']"))
         ).click()
 
+        time.sleep(3)
+
         email_client.login()
+
+        time.sleep(3)
+
+        self.selenium_controller.wait(5).until(
+            EC.presence_of_element_located((By.XPATH, "//button[&data-testid='0300']"))
+        ).click()
 
     def local_behaviour(self):
         self.cleanup_manager.add_cleanup_task(lambda: office_utils.close_app("word"))

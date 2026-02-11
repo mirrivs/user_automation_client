@@ -1,12 +1,12 @@
 import os
 import random
 import sys
+
 import yaml
 
-from behaviour.consts import TEMPLATES_DIR
 import config_handler as config_handler
 from app_logger import app_logger
-
+from behaviour.consts import TEMPLATES_DIR
 
 emails_file = os.path.join(TEMPLATES_DIR, "emails.yml")
 
