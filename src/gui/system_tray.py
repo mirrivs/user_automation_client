@@ -1,13 +1,14 @@
-from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QStyle
-from PyQt6.QtCore import QTimer, Qt, QSize
 import os
-import sys
 import platform
+import sys
+
+from PyQt6.QtCore import QSize, Qt, QTimer
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import QApplication, QMenu, QStyle, QSystemTrayIcon
 
 from resource_path import resource_path
-from popup_window import PopupWindow
-from app_logger import app_logger
+from src.gui.popup_window import PopupWindow
+from src.logger import app_logger
 from user_automation_manager import IdleCycleStatus, UserAutomationManager
 
 
@@ -66,17 +67,16 @@ class SystemTrayApp:
         app_logger.debug("Qt system tray is available!")
 
         # Load icon - try multiple sizes for best display
-        parent_dir = os.path.dirname(os.path.abspath(__file__))
         icon = QIcon()
 
         # Add multiple icon sizes for different DPI/scaling scenarios
         for size in [16, 22, 24, 32, 48, 64]:
-            icon_path = os.path.join(parent_dir, "static", "logos", f"user_automation_logo_{size}.png")
+            icon_path = resource_path(os.path.join("static", "logos", f"user_automation_logo_{size}.png"))
             if os.path.exists(icon_path):
                 icon.addFile(icon_path, QSize(size, size))
                 app_logger.debug(f"Added icon size: {size}x{size}")
             elif size == 32:  # Fallback to the one we know exists
-                icon_path_32 = os.path.join(parent_dir, "static", "logos", "user_automation_logo_32.png")
+                icon_path_32 = resource_path(os.path.join("static", "logos", "user_automation_logo_32.png"))
                 if os.path.exists(icon_path_32):
                     pixmap = QPixmap(icon_path_32)
                     scaled_pixmap = pixmap.scaled(
@@ -146,20 +146,20 @@ class SystemTrayApp:
             # Toggle popup on left-click, middle-click, and double-click
             # Right-click (Context) will show the menu automatically
             if reason == QSystemTrayIcon.ActivationReason.Trigger:
-                app_logger.info("Left-click detected - toggling popup")
+                app_logger.debug("Left-click detected - toggling popup")
                 self.toggle_popup()
             elif reason == QSystemTrayIcon.ActivationReason.MiddleClick:
-                app_logger.info("Middle-click detected - toggling popup")
+                app_logger.debug("Middle-click detected - toggling popup")
                 self.toggle_popup()
             elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
-                app_logger.info("Double-click detected - toggling popup")
+                app_logger.debug("Double-click detected - toggling popup")
                 self.toggle_popup()
             elif reason == QSystemTrayIcon.ActivationReason.Context:
                 # Right-click shows context menu - don't toggle popup
-                app_logger.info("Right-click detected - showing context menu")
+                app_logger.debug("Right-click detected - showing context menu")
             else:
                 # Unknown reason - toggle popup
-                app_logger.info("Unknown activation reason - toggling popup")
+                app_logger.debug("Unknown activation reason - toggling popup")
                 self.toggle_popup()
 
         except Exception as e:

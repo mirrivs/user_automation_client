@@ -1,12 +1,13 @@
 import time
 
+from behaviour.selenium.selenium_controller import EmailClientUser, getSeleniumController
+
 from app_config import automation_config
-from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour, BehaviourCategory
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
-from behaviour.selenium.models.email_client import EmailClient
-from behaviour.selenium.selenium_controller import EmailClientUser, getSeleniumController
 from cleanup_manager import CleanupManager
+from lib.selenium.models import EmailClient
+from src.logger import app_logger
 
 
 class BehaviourWorkOrganizationWeb(BaseBehaviour):

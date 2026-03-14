@@ -5,12 +5,13 @@ Prerequisites:
     - Opened roundcube login page
 """
 
-import time
 import os
 import sys
+import time
+
 import pyautogui as pag
 
-from app_logger import app_logger
+from src.logger import app_logger
 
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 

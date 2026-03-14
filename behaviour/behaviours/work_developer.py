@@ -4,12 +4,12 @@ import random
 import time
 
 from app_config import automation_config
-from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
 from behaviour.consts import TEMPLATES_DIR
 from behaviour.models.behaviour import BehaviourCategory
 from behaviour.scripts_pyautogui.os_utils import os_utils
 from cleanup_manager import CleanupManager
+from src.logger import app_logger
 
 LINUX_FILE = os.path.join(TEMPLATES_DIR, "c_program.txt")
 WINDOWS_FILE = os.path.join(TEMPLATES_DIR, "ps_program.txt")

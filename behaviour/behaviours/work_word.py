@@ -4,16 +4,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from app_config import automation_config
-from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
-from behaviour.behaviour_cfg import get_behaviour_cfg
+from behaviour.config import get_behaviour_cfg
 from behaviour.models.behaviour import BehaviourCategory
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.scripts_pyautogui.office_utils import office_utils
-from behaviour.selenium.email_web_client import EmailClientUser
-from behaviour.selenium.models.email_client import EmailClient
-from behaviour.selenium.selenium_controller import getSeleniumController
 from cleanup_manager import CleanupManager
+from lib.selenium.email_web_client import EmailClientUser
+from lib.selenium.models import EmailClient
+from lib.selenium.selenium_controller import getSeleniumController
+from src.logger import app_logger
 
 
 class BehaviourWorkWord(BaseBehaviour):
@@ -33,7 +33,7 @@ class BehaviourWorkWord(BaseBehaviour):
 
         self.general_cfg = automation_config["general"]
         self.user = self.general_cfg["user"]
-        self.behaviour_cfg = get_behaviour_cfg(self.id)
+        self.config = get_behaviour_cfg(self.id)
         self.email_client_type = EmailClient(self.general_cfg["email_client"])
 
     @classmethod

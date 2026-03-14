@@ -1,8 +1,8 @@
 import os
 from typing import Any, Union, cast
 
-from config_handler import load_config, save_config
-from models.config import AppConfig, AutomationConfig
+from src.config.config_handler import load_config, save_config
+from src.config.models.config import AppConfig, AutomationConfig
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
 config_file = os.path.join(parent_dir, "config.yml")

@@ -8,11 +8,12 @@ Prerequisites:
 
 import os
 import sys
-import time
 
 import pyautogui as pag
 
-from app_logger import app_logger
+from lib.autogui import locate_image_center
+from lib.cancellable_futures import sleep
+from src.logger import app_logger
 
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,7 +24,7 @@ def start_app(app: str):
     """
     try:
         pag.press("win")
-        time.sleep(0.5)
+        sleep(0.5)
         pag.write(app, 0.1)
 
         image = None
@@ -35,7 +36,7 @@ def start_app(app: str):
         image = os.path.join(PARENT_DIR, app_image_mapping.get(app, ""))
 
         if image:
-            app_image = pag.locateCenterOnScreen(image, minSearchTime=5, confidence=0.8, grayscale=True)
+            app_image = locate_image_center(image, minSearchTime=5, confidence=0.8, grayscale=True)
             pag.click(app_image)
             pag.press("enter")
         else:
@@ -43,14 +44,12 @@ def start_app(app: str):
 
         # Wait for office app identifier to be displayed - app is opened
         office_app_identifier_image = os.path.join(PARENT_DIR, "office_app_identifier.png")
-        office_app_identifier_pos = pag.locateCenterOnScreen(
+        office_app_identifier_pos = locate_image_center(
             office_app_identifier_image, minSearchTime=10, confidence=0.9, grayscale=True
         )
 
-        time.sleep(4)
-        # check_license_agreement()
-        print("a")
-        time.sleep(2)
+        sleep(4)
+        sleep(2)
         check_activation_wizard()
 
     except Exception as ex:
@@ -68,7 +67,7 @@ def check_license_agreement():
     """
     try:
         check_license_image = os.path.join(PARENT_DIR, "accept_license_agreement.png")
-        check_license_pos = pag.locateCenterOnScreen(check_license_image, minSearchTime=3)
+        check_license_pos = locate_image_center(check_license_image, minSearchTime=3)
         pag.click(check_license_pos)
     except Exception as ex:
         app_logger.error(f"Error writing into a word file, Ex: {ex}")
@@ -83,9 +82,7 @@ def check_activation_wizard():
     """
     try:
         ms_activation_image = os.path.join(PARENT_DIR, "activation_wizard_identifier.png")
-        ms_activation_pos = pag.locateCenterOnScreen(
-            ms_activation_image, minSearchTime=3, confidence=0.8, grayscale=True
-        )
+        ms_activation_pos = locate_image_center(ms_activation_image, minSearchTime=3, confidence=0.8, grayscale=True)
         pag.click(ms_activation_pos)
         if ms_activation_pos:
             pag.press("c")
@@ -103,16 +100,16 @@ def write_word_file(text):
     """
     try:
         pag.hotkey("ctrl", "n")
-        time.sleep(0.5)
+        sleep(0.5)
         pag.press("tab")
-        time.sleep(0.5)
+        sleep(0.5)
         pag.press("enter")
-        time.sleep(2)
+        sleep(2)
         pag.write(text, 0.1)
         pag.hotkey("alt", "f4")
-        time.sleep(0.5)
+        sleep(0.5)
         pag.press("n")
-        time.sleep(0.5)
+        sleep(0.5)
 
     except Exception as ex:
         app_logger.error(f"Error writing into a word file, Ex: {ex}")

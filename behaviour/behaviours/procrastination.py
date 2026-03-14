@@ -1,40 +1,25 @@
 import random
-import time
 from datetime import datetime
 
 from app_config import automation_config
-from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
-from behaviour.behaviour_cfg import get_behaviour_cfg
+from behaviour.config import get_behaviour_cfg
 from behaviour.models.behaviour import BehaviourCategory
-from behaviour.models.behaviour_cfg import ProcrastinationCfg
-from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
-from behaviour.selenium.models.email_client import EmailClient
-from behaviour.selenium.selenium_controller import (
+from behaviour.models.config import ProcrastinationCfg
+from behaviour.scripts_pyautogui.browser_utils.browser_utils import Edge, Firefox
+from behaviour.utils.random_choice import weighted_random_choice
+from cleanup_manager import CleanupManager
+
+# new
+from lib.cancellable_futures import CancellableThreadPoolExecutor, sleep
+from lib.selenium.models import EmailClient
+from lib.selenium.selenium_controller import (
     EmailClientUser,
     getSeleniumController,
 )
-from cleanup_manager import CleanupManager
 
-
-def weighted_random_choice(weights_dict):
-    """Select a random key from a dictionary based on weighted probabilities."""
-    if not weights_dict:
-        raise ValueError("Weights dictionary cannot be empty")
-
-    total_weight = sum(weights_dict.values())
-    if total_weight <= 0:
-        raise ValueError("Total weight must be positive")
-
-    random_number = random.uniform(0, total_weight)
-    cumulative_weight = 0
-
-    for preference, weight in weights_dict.items():
-        cumulative_weight += weight
-        if random_number <= cumulative_weight:
-            return preference
-
-    return list(weights_dict.keys())[-1]
+# old
+from src.logger import app_logger
 
 
 class BehaviourProcrastination(BaseBehaviour):
@@ -52,7 +37,7 @@ class BehaviourProcrastination(BaseBehaviour):
         super().__init__(cleanup_manager)
 
         self.user = automation_config["general"]["user"]
-        self.behaviour_cfg = get_behaviour_cfg(self.id, ProcrastinationCfg)
+        self.config = get_behaviour_cfg(self.id, ProcrastinationCfg)
         self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
     @classmethod
@@ -62,6 +47,10 @@ class BehaviourProcrastination(BaseBehaviour):
     def run_behaviour(self):
         app_logger.info(f"Starting {self.id} behaviour")
 
+        pool = CancellableThreadPoolExecutor(10)
+
+        browser = Firefox() if self.os_type == "Linux" else Edge()
+
         is_o365 = self.email_client_type == EmailClient.O365
         email_client_user: EmailClientUser = {
             "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
@@ -70,40 +59,38 @@ class BehaviourProcrastination(BaseBehaviour):
         }
 
         self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-
         self.cleanup_manager.selenium_controller = self.selenium_controller
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
 
         self.selenium_controller.maximize_driver_window()
-        time.sleep(3)
+        sleep(3)
 
-        procrastination_time = random.uniform(self.behaviour_cfg["min_duration"], self.behaviour_cfg["max_duration"])
+        test_time = random.uniform(self.config["min_duration"], self.config["max_duration"])
         start_time = datetime.now()
 
-        preferences = self.behaviour_cfg["preference"]
-        selected_preference = weighted_random_choice(preferences)
+        selected_preference = weighted_random_choice(self.config["preference"])
 
-        app_logger.info(f"Selected procrastination preference: {selected_preference}")
+        app_logger.info(f"Selected preference: {selected_preference}")
 
         if selected_preference == "youtube":
-            BrowserUtils.search_by_url("youtube.com")
-            time.sleep(3)
+            pool.submit(browser.search_by_url, "youtube.com")
+            sleep(3)
 
-            watch_duration = procrastination_time - (datetime.now() - start_time).total_seconds()
-            self.selenium_controller.procrastinate_watch_youtube_shorts(watch_duration)
+            watch_duration = test_time - (datetime.now() - start_time).total_seconds()
+            pool.submit(self.selenium_controller.procrastinate_watch_youtube_shorts, watch_duration)
 
         elif selected_preference == "kittens":
-            BrowserUtils.search_by_url("kittens")
-            time.sleep(3)
+            pool.submit(browser.search_by_url, "kittens")
+            sleep(3)
 
             if self.os_type == "Linux":
-                self.selenium_controller.accept_google_cookies()
-                time.sleep(2)
+                pool.submit(self.selenium_controller.accept_google_cookies)
+                sleep(2)
 
-            scroll_duration = procrastination_time - (datetime.now() - start_time).total_seconds()
-            self.selenium_controller.procrastinate_scroll_images(round(scroll_duration))
-            time.sleep(2)
+            scroll_duration = test_time - (datetime.now() - start_time).total_seconds()
+            pool.submit(self.selenium_controller.procrastinate_scroll_images, round(scroll_duration))
+            sleep(2)
         else:
-            app_logger.warning(f"Unknown procrastination preference: {selected_preference}")
+            app_logger.warning(f"Unknown test preference: {selected_preference}")
 
         app_logger.info(f"Completed {self.id} behaviour")

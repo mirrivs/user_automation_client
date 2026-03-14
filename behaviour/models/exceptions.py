@@ -1,6 +1,6 @@
 from typing import Optional
 
-from app_logger import app_logger
+from src.logger import app_logger
 
 
 class BehaviourException(Exception):

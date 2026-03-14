@@ -4,18 +4,18 @@ import pyautogui as pag
 from selenium.webdriver.common.by import By
 
 from app_config import automation_config
-from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour, BehaviourCategory
-from behaviour.behaviour_cfg import get_behaviour_cfg
-from behaviour.models.behaviour_cfg import AttackReverseShellCfg
+from behaviour.config import get_behaviour_cfg
+from behaviour.models.config import AttackReverseShellCfg
 from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
 from behaviour.scripts_pyautogui.win_utils import win_utils
-from behaviour.selenium.models.email_client import EmailClient
-from behaviour.selenium.selenium_controller import (
+from cleanup_manager import CleanupManager
+from lib.selenium.models import EmailClient
+from lib.selenium.selenium_controller import (
     EmailClientUser,
     getSeleniumController,
 )
-from cleanup_manager import CleanupManager
+from src.logger import app_logger
 
 
 class BehaviourAttackReverseShell(BaseBehaviour):
@@ -33,7 +33,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
         super().__init__(cleanup_manager)
 
         self.user = automation_config["general"]["user"]
-        self.behaviour_cfg: AttackReverseShellCfg = get_behaviour_cfg(self.id, AttackReverseShellCfg, True)
+        self.config: AttackReverseShellCfg = get_behaviour_cfg(self.id, AttackReverseShellCfg, True)
 
     @classmethod
     def is_available(cls) -> bool:
@@ -82,7 +82,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
             else:
                 subject_link = email.find_element(By.CSS_SELECTOR, "td.subject a")
 
-            if subject_link.text == self.behaviour_cfg["malicious_email_subject"]:
+            if subject_link.text == self.config["malicious_email_subject"]:
                 subject_link.click()
                 break
 

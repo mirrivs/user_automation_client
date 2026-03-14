@@ -14,7 +14,7 @@ def get_behaviour_cfg(behaviour_id: str, cfg_type: Type[T], required: bool = Fal
 def get_behaviour_cfg(behaviour_id: str, *, required: bool = False) -> dict: ...
 
 
-def get_behaviour_cfg(behaviour_id: str, cfg_type: type = dict, required: bool = False) -> dict:  # type: ignore[overload-impl]
+def get_behaviour_cfg(behaviour_id: str, cfg_type: type = object, required: bool = False) -> object:
     """
     Retrieve behaviour configuration from main config.
 
@@ -26,7 +26,7 @@ def get_behaviour_cfg(behaviour_id: str, cfg_type: type = dict, required: bool =
     Returns:
         Behaviour configuration dict, or empty dict if not found and not required
     """
-    behaviour_cfg = automation_config.get("behaviours", {}).get(behaviour_id, {})
-    if not behaviour_cfg and required:
+    config = automation_config.get("behaviours", {}).get(behaviour_id, {})
+    if not config and required:
         raise BehaviourException(f"Configuration for task '{behaviour_id}' not found")
-    return behaviour_cfg
+    return config

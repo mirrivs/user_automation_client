@@ -4,18 +4,18 @@ import pyautogui as pag
 from selenium.webdriver.common.by import By
 
 from app_config import automation_config
-from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour
-from behaviour.behaviour_cfg import get_behaviour_cfg
+from behaviour.config import get_behaviour_cfg
 from behaviour.models.behaviour import BehaviourCategory
-from behaviour.models.behaviour_cfg import AttackRansomwareCfg
-from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils, EdgeUtils
+from behaviour.models.config import AttackRansomwareCfg
+from behaviour.scripts_pyautogui.browser_utils.browser_utils import Edge, Firefox
 from behaviour.scripts_pyautogui.os_utils import os_utils
 from behaviour.scripts_pyautogui.win_utils import win_utils
-from behaviour.selenium.email_web_client import EmailClientUser
-from behaviour.selenium.models.email_client import EmailClient
-from behaviour.selenium.selenium_controller import getSeleniumController
 from cleanup_manager import CleanupManager
+from lib.selenium.email_web_client import EmailClientUser
+from lib.selenium.models import EmailClient
+from lib.selenium.selenium_controller import getSeleniumController
+from src.logger import app_logger
 
 
 class BehaviourAttackRansomware(BaseBehaviour):
@@ -34,7 +34,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
 
         self.user = automation_config["general"]["user"]
         self.email_client_type = EmailClient(automation_config["general"]["email_client"])
-        self.behaviour_cfg = get_behaviour_cfg(self.id, AttackRansomwareCfg, True)
+        self.config = get_behaviour_cfg(self.id, AttackRansomwareCfg, True)
 
     @classmethod
     def is_available(cls) -> bool:
@@ -50,6 +50,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
             "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
         }
 
+        browser = Firefox() if self.os_type == "Linux" else Edge()
         self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
 
         self.cleanup_manager.selenium_controller = self.selenium_controller
@@ -58,7 +59,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
         self.selenium_controller.maximize_driver_window()
         time.sleep(4)
 
-        BrowserUtils.search_by_url(automation_config["general"]["organization_mail_server_url"])
+        browser.search_by_url(automation_config["general"]["organization_mail_server_url"])
         time.sleep(4)
 
         self.selenium_controller.email_client.login()
@@ -79,7 +80,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
             else:
                 subject_link = email.find_element(By.CSS_SELECTOR, "td.subject a")
 
-            if subject_link.text == self.behaviour_cfg["malicious_email_subject"]:
+            if subject_link.text == self.config["malicious_email_subject"]:
                 subject_link.click()
                 break
         downloaded_attachments = []
@@ -92,7 +93,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
         if self.email_client_type == "owa":
             self.selenium_controller.owa_search_link_in_email()
             time.sleep(5)
-            EdgeUtils.allow_suspicious_file()
+            self.selenium_controller.email_client.email_allow_files()
             time.sleep(3)
             pag.press("tab")
             time.sleep(0.5)

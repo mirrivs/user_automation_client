@@ -1,22 +1,24 @@
+import os
+import platform
+
+from PyQt6.QtCore import QObject, QSize, Qt
+from PyQt6.QtGui import QIcon, QImage, QPainter, QPixmap
+from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import (
-    QWidget,
+    QApplication,
     QFrame,
-    QVBoxLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QTabWidget,
     QScrollArea,
-    QApplication,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QIcon, QImage, QPainter, QPixmap
-from PyQt6.QtSvg import QSvgRenderer
-import platform
-import os
 
 from behaviour.behaviour import BaseBehaviour
 from resource_path import resource_path
+from src.logger import app_logger
 from user_automation_manager import UserAutomationManager
 
 
@@ -249,7 +251,11 @@ class PopupWindow(QWidget):
             )
 
     def run_behaviour(self):
-        sender = self.sender()
+        sender: QObject | None = self.sender()
+        if sender is None:
+            app_logger.error("Popup window is not defined")
+            return
+
         behaviour_id = sender.property("behaviour_id")
 
         if self.behaviour_manager.is_behaviour_running():

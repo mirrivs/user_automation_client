@@ -5,14 +5,15 @@ Prerequisites:
     - Windows or linux operating system
 """
 
+import os
 import platform
 import sys
-import time
-import os
+
 import pyautogui as pag
 
-
-from app_logger import app_logger
+from lib.autogui import write
+from lib.cancellable_futures import sleep
+from src.logger import app_logger
 
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 
@@ -26,15 +27,15 @@ def open_terminal():
     try:
         if os_type == "Linux":
             pag.press("win")
-            time.sleep(1)
-            pag.write("terminal", 0.1)
-            time.sleep(2)
+            sleep(1)
+            write("terminal", 0.1)
+            sleep(2)
             pag.press("enter")
         else:
             pag.hotkey("win", "r")
-            time.sleep(1)
-            pag.write("cmd", 0.1)
-            time.sleep(1)
+            sleep(1)
+            write("cmd", 0.1)
+            sleep(1)
             pag.press("enter")
     except Exception as ex:
         app_logger.error(f"Error opening terminal, Ex: {ex}")
@@ -50,10 +51,10 @@ def close_terminal():
     try:
         if os_type == "Linux":
             pag.hotkey("ctrl", "c")
-            time.sleep(1)
+            sleep(1)
             pag.hotkey("ctrl", "d")
         else:
-            pag.write("exit", 0.1)
+            write("exit", 0.1)
             pag.press("enter")
 
     except Exception as ex:
@@ -67,30 +68,30 @@ def write_file(filename, text):
     """
     try:
         if os_type == "Linux":
-            pag.write(f"nano {filename}", 0.1)
+            write(f"nano {filename}", 0.1)
             pag.press("enter")
-            time.sleep(1)
-            pag.write(text, 0, 1)
-            time.sleep(1)
+            sleep(1)
+            write(text, 0)
+            sleep(1)
             pag.hotkey("ctrl", "x")
-            time.sleep(1)
+            sleep(1)
             pag.press("y")
-            time.sleep(1)
+            sleep(1)
             pag.press("enter")
         else:
-            pag.write(f"notepad {filename}", 0.1)
+            write(f"notepad {filename}", 0.1)
             pag.press("enter")
-            time.sleep(1)
+            sleep(1)
             pag.press("y")
-            time.sleep(0.5)
+            sleep(0.5)
             pag.hotkey("ctrl", "a")
-            time.sleep(0.5)
+            sleep(0.5)
             pag.hotkey("ctrl", "x")
-            time.sleep(0.5)
-            pag.write(text, 0.1)
-            time.sleep(1)
+            sleep(0.5)
+            write(text, 0.1)
+            sleep(1)
             pag.hotkey("ctrl", "s")
-            time.sleep(1)
+            sleep(1)
             pag.hotkey("alt", "f4")
 
     except Exception as ex:
@@ -104,10 +105,10 @@ def delete_file(filename):
     """
     try:
         if os_type == "Linux":
-            pag.write(f"sudo rm -f {filename}", 0.1)
+            write(f"sudo rm -f {filename}", 0.1)
         else:
-            pag.write(f"del {filename}", 0.1)
-        time.sleep(1)
+            write(f"del {filename}", 0.1)
+        sleep(1)
         pag.press("enter")
     except Exception as ex:
         app_logger.error(f"Error deleting file {filename}, Ex: {ex}")
@@ -121,8 +122,8 @@ def compile_c_program(filename, output_filename):
         - c program in directory
     """
     try:
-        pag.write(f"gcc {filename} -o {output_filename}", 0.1)
-        time.sleep(1)
+        write(f"gcc {filename} -o {output_filename}", 0.1)
+        sleep(1)
         pag.press("enter")
     except Exception as ex:
         app_logger.error(f"Error copiling c program, Ex: {ex}")
@@ -137,8 +138,8 @@ def run_c_program(filename):
         - compiled c program in directory
     """
     try:
-        pag.write(f"./{filename}", 0.1)
-        time.sleep(1)
+        write(f"./{filename}", 0.1)
+        sleep(1)
         pag.press("enter")
     except Exception as ex:
         app_logger.error(f"Error running c program, Ex: {ex}")
@@ -153,8 +154,8 @@ def run_ps_program(filename):
         - Powershell script in directory
     """
     try:
-        pag.write(f"powershell -file {filename}", 0.1)
-        time.sleep(1)
+        write(f"powershell -file {filename}", 0.1)
+        sleep(1)
         pag.press("enter")
     except Exception as ex:
         app_logger.error(f"Error running powershell program, Ex: {ex}")
@@ -183,9 +184,9 @@ def cut():
 
 def open_downloads_folder():
     pag.hotkey("win", "r")
-    time.sleep(0.1)
-    pag.write("downloads", 0.1)
-    time.sleep(0.1)
+    sleep(0.1)
+    write("downloads", 0.1)
+    sleep(0.1)
     pag.press("enter")
 
 
@@ -200,13 +201,13 @@ def rename(new_name):
     Prerequisites:
         - File selected
     """
-    time.sleep(1)
+    sleep(1)
     pag.press("f2")
-    time.sleep(1)
-    pag.write(new_name, 0.1)
-    time.sleep(1)
+    sleep(1)
+    write(new_name, 0.1)
+    sleep(1)
     pag.press("enter")
-    time.sleep(1)
+    sleep(1)
 
 
 def maximize_window():
@@ -257,9 +258,9 @@ def extract_file():
         - File selected
     """
     open_file_options()
-    time.sleep(1)
+    sleep(1)
     pag.press("t")
-    time.sleep(1)
+    sleep(1)
     pag.press("enter")
-    time.sleep(1)
+    sleep(1)
     pag.press("enter")

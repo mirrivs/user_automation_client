@@ -1,2 +1,0 @@
-class OperationCancelled(Exception):
-    pass

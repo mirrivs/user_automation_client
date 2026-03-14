@@ -1,12 +1,12 @@
-import ctypes
 import platform
 import threading
 from typing import Callable
 
 from app_config import app_config
-from app_logger import app_logger
 from behaviour.models.behaviour import BehaviourCategory
 from cleanup_manager import CleanupManager
+from lib.cancellable_futures import CancellableThreadPoolExecutor, OperationCancelled, _current_executor
+from src.logger import app_logger
 
 
 class BaseBehaviour(threading.Thread):
@@ -36,38 +36,28 @@ class BaseBehaviour(threading.Thread):
     landscape_id = app_config["app"]["landscape_id"]
 
     def __init__(self, cleanup_manager: CleanupManager, *args, **kwargs):
-        """
-        Initialize the behaviour.
-
-        Args:
-            cleanup_manager: CleanupManager instance for resource cleanup.
-        """
         super().__init__(*args, **kwargs)
 
-        # Use class-level attributes, fallback to class name
         if self.id is None:
             self.id = self.__class__.__name__
         if self.display_name is None:
             self.display_name = self.id
 
-        # Cleanup management
         self.cleanup_manager = cleanup_manager
         self._cleanup_callbacks = []
+        self.pool = CancellableThreadPoolExecutor(max_workers=1)
 
     @classmethod
     def is_available(cls) -> bool:
-        """
-        Override this method to check if the behaviour can run on this system.
-        Default: always available.
-
-        This is a class method so availability can be checked without instantiation.
-        """
         return True
 
     def run(self):
-        """Main thread execution - handles SystemExit and calls cleanup"""
+        """Main thread execution - runs behaviour, cleans up."""
+        _current_executor.set(self.pool)
         try:
             self.run_behaviour()
+        except OperationCancelled:
+            app_logger.info(f"{self.__class__.__name__} cancelled")
         except SystemExit:
             app_logger.info(f"{self.__class__.__name__} interrupted via SystemExit")
         except Exception as e:
@@ -76,11 +66,9 @@ class BaseBehaviour(threading.Thread):
             self.cleanup()
 
     def run_behaviour(self):
-        """Override this method with your behaviour automation code."""
         raise NotImplementedError("Subclasses must implement run_behaviour()")
 
     def cleanup(self):
-        """Override this method to add custom cleanup logic."""
         app_logger.info(f"Running cleanup for {self.__class__.__name__}")
 
         for callback in reversed(self._cleanup_callbacks):
@@ -89,6 +77,11 @@ class BaseBehaviour(threading.Thread):
             except Exception as e:
                 app_logger.error(f"Error in cleanup callback: {e}")
 
+        try:
+            self.pool.shutdown(wait=True)
+        except Exception as e:
+            app_logger.error(f"Error shutting down pool: {e}")
+
         if self.cleanup_manager:
             try:
                 self.cleanup_manager.run_cleanup()
@@ -96,35 +89,13 @@ class BaseBehaviour(threading.Thread):
                 app_logger.error(f"Error in cleanup manager: {e}")
 
     def register_cleanup(self, callback: Callable):
-        """Register a cleanup callback to be executed when thread stops."""
         self._cleanup_callbacks.append(callback)
 
-    def stop(self):
-        """Instantly stop this thread by raising SystemExit"""
-        if not self.is_alive():
-            app_logger.warning(f"Cannot stop {self.__class__.__name__} - thread is not alive")
-            return
-
+    def stop(self, timeout: float = 2):
+        """Stop all pool tasks and wait for the behaviour thread to finish."""
         app_logger.info(f"Stopping {self.__class__.__name__}...")
-        self._raise_exception(SystemExit)
-
-    def _raise_exception(self, exctype):
-        """Raise an exception in this thread."""
-        if not self.is_alive():
-            return
-
-        tid = self.ident
-        if tid is None:
-            app_logger.warning("Cannot raise exception - thread ID is None")
-            return
-
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tid), ctypes.py_object(exctype))
-
-        if res == 0:
-            raise ValueError("Invalid thread id")
-        elif res > 1:
-            ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tid), None)
-            raise SystemError("PyThreadState_SetAsyncExc failed")
+        self.pool.cancel()
+        self.join(timeout=timeout)
 
     def __repr__(self):
         available = self.is_available()

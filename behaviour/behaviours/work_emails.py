@@ -2,16 +2,16 @@ import platform
 import time
 
 from app_config import automation_config
-from app_logger import app_logger
 from behaviour.behaviour import BaseBehaviour, BehaviourCategory
-from behaviour.behaviour_cfg import get_behaviour_cfg
-from behaviour.models.behaviour_cfg import WorkEmailsCfg
-from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
-from behaviour.selenium.email_web_client import EmailClientUser
-from behaviour.selenium.models.email_client import EmailClient
-from behaviour.selenium.selenium_controller import getSeleniumController
+from behaviour.config import get_behaviour_cfg
+from behaviour.models.config import WorkEmailsCfg
+from behaviour.scripts_pyautogui.browser_utils.browser_utils import Edge
 from cleanup_manager import CleanupManager
-from email_manager.email_manager import EmailManager
+from lib.email_manager.email_manager import EmailManager
+from lib.selenium.email_web_client import EmailClientUser
+from lib.selenium.models import EmailClient
+from lib.selenium.selenium_controller import getSeleniumController
+from src.logger import app_logger
 
 
 class BehaviourWorkEmails(BaseBehaviour):
@@ -30,7 +30,7 @@ class BehaviourWorkEmails(BaseBehaviour):
 
         self.general_cfg = automation_config["general"]
         self.user = self.general_cfg["user"]
-        self.behaviour_cfg = get_behaviour_cfg(self.id, WorkEmailsCfg)
+        self.config = get_behaviour_cfg(self.id, WorkEmailsCfg)
         self.email_client_type = EmailClient(self.general_cfg["email_client"])
 
     @classmethod
@@ -39,6 +39,8 @@ class BehaviourWorkEmails(BaseBehaviour):
 
     def run_behaviour(self):
         app_logger.info("Starting work_emails behaviour")
+
+        browser = Edge()
 
         self.email_manager = EmailManager()
         is_o365 = self.email_client_type == EmailClient.O365
@@ -58,7 +60,7 @@ class BehaviourWorkEmails(BaseBehaviour):
         self.selenium_controller.maximize_driver_window()
         time.sleep(4)
 
-        BrowserUtils.search_by_url(self.general_cfg["organization_mail_server_url"])
+        browser.search_by_url(self.general_cfg["organization_mail_server_url"])
 
         email_client.login()
 
@@ -72,8 +74,8 @@ class BehaviourWorkEmails(BaseBehaviour):
 
         responded_count = email_client.reply_to_emails(unread_emails)
 
-        if not responded_count and self.behaviour_cfg.get("is_conversation_starter", False):
-            email_receivers = self.behaviour_cfg.get("email_receivers")
+        if not responded_count and self.config.get("is_conversation_starter", False):
+            email_receivers = self.config.get("email_receivers")
             if not email_receivers:
                 app_logger.warning(
                     "Cannot start email conversation: 'email_receivers' not configured in behaviours.work_emails"

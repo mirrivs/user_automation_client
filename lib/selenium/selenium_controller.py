@@ -1,6 +1,5 @@
 import platform
 import random
-import time
 from typing import Optional
 
 import pyautogui as pag
@@ -11,16 +10,17 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 
-from app_logger import app_logger
 from behaviour.models.exceptions import BehaviourException
-from behaviour.selenium.driver_type import DriverType
-from behaviour.selenium.email_web_client import (
+from lib.cancellable_futures import sleep
+from lib.selenium.email_web_client import (
     BaseEmailWebClient,
     EmailClientUser,
     getEmailClient,
 )
-from behaviour.selenium.models.email_client import EmailClient
-from behaviour.selenium.selenium_driver import SeleniumDriver
+from lib.selenium.models import EmailClient
+from lib.selenium.selenium_driver import SeleniumDriver
+from lib.selenium.types import DriverType
+from src.logger import app_logger
 
 
 class SeleniumController(SeleniumDriver):
@@ -59,18 +59,18 @@ class SeleniumController(SeleniumDriver):
                 ).click()
             else:
                 self.wait(5).until(EC.presence_of_element_located((By.XPATH, "//input[@name='email']"))).click()
-            time.sleep(0.5)
+            sleep(0.5)
             pag.write(email, 0.1)
-            time.sleep(0.5)
+            sleep(0.5)
             if self.email_client == "owa":
                 self.wait(5).until(
                     EC.presence_of_element_located((By.XPATH, "//input[contains(@name,'password')]"))
                 ).click()
             else:
                 self.wait(5).until(EC.presence_of_element_located((By.XPATH, "//input[@name='password']"))).click()
-            time.sleep(0.5)
+            sleep(0.5)
             pag.write(password, 0.1)
-            time.sleep(0.5)
+            sleep(0.5)
             if self.email_client == "owa":
                 self.wait(5).until(
                     EC.presence_of_element_located((By.XPATH, "//button[contains(@id,'rcmloginsubmit')]"))
@@ -91,7 +91,7 @@ class SeleniumController(SeleniumDriver):
         try:
             if self.email_client == "owa":
                 self.wait(5).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Logout')]"))).click()
-                time.sleep(1.5)
+                sleep(1.5)
 
         except Exception as ex:
             raise BehaviourException("Error logging out of roundcube web client", ex)
@@ -117,28 +117,28 @@ class SeleniumController(SeleniumDriver):
 
             if element_found and settings_button.is_displayed():
                 settings_button.click()
-                time.sleep(1)
+                sleep(1)
                 self.wait(5).until(
                     EC.presence_of_element_located((By.XPATH, "//a[contains(text(), 'Nastavenia')]"))
                 ).click()
-                time.sleep(1)
+                sleep(1)
                 self.wait(5).until(
                     EC.presence_of_element_located((By.XPATH, "//td[contains(text(), 'Používateľské rozhranie')]"))
                 ).click()
-                time.sleep(1)
+                sleep(1)
                 # Switch to email Iframe
                 iframe = self.driver.find_element(By.ID, "preferences-frame")
                 self.driver.switch_to.frame(iframe)
-                time.sleep(1)
+                sleep(1)
                 language_dropdown = self.wait(5).until(
                     EC.presence_of_element_located((By.XPATH, "//select[@name='_language']"))
                 )
                 Select(language_dropdown).select_by_value("en_US")
-                time.sleep(1)
+                sleep(1)
                 self.wait(5).until(
                     EC.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Uložiť')]"))
                 ).click()
-                time.sleep(1)
+                sleep(1)
                 # Switch to default Iframe
                 self.driver.switch_to.default_content()
                 self.wait(5).until(
@@ -158,7 +158,7 @@ class SeleniumController(SeleniumDriver):
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Accept')]"))
             )
             accept_button.click()
-            time.sleep(3)
+            sleep(3)
 
             # Wait for the "Shorts" button to be visible
             shorts_button = self.wait(10).until(EC.element_to_be_clickable((By.XPATH, "//a[@title='Shorts']")))
@@ -167,7 +167,7 @@ class SeleniumController(SeleniumDriver):
             total_duration = 0
             while total_duration < duration:
                 watch_duration = random.uniform(10.0, 20.0)
-                time.sleep(watch_duration)
+                sleep(watch_duration)
 
                 # Watch next video
                 next_video_button = self.wait(10).until(
@@ -216,13 +216,13 @@ class SeleniumController(SeleniumDriver):
             # Wait for the "Images" link to be visible
             images_link = self.wait(10).until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Images')]")))
             images_link.click()
-            time.sleep(1)
+            sleep(1)
 
             timer = 0
             while timer < duration:
                 pag.press("pgdn")
                 sleep_time = random.randint(3, 6)
-                time.sleep(sleep_time)
+                sleep(sleep_time)
                 timer += sleep_time
 
         except Exception as ex:
@@ -258,7 +258,7 @@ class SeleniumController(SeleniumDriver):
                 scroll_count += 1
 
                 sleep_time = random.randint(3, 6)
-                time.sleep(sleep_time)
+                sleep(sleep_time)
                 timer += sleep_time
 
         except Exception as ex:
@@ -272,13 +272,13 @@ class SeleniumController(SeleniumDriver):
         """
         try:
             self.wait(5).until(EC.presence_of_element_located((By.XPATH, "//input[@name='email']"))).click()
-            time.sleep(0.5)
+            sleep(0.5)
             pag.write(email, 0.1)
-            time.sleep(0.5)
+            sleep(0.5)
             self.wait(5).until(EC.presence_of_element_located((By.XPATH, "//input[@name='password']"))).click()
-            time.sleep(0.5)
+            sleep(0.5)
             pag.write(password, 0.1)
-            time.sleep(0.5)
+            sleep(0.5)
             self.wait(5).until(EC.presence_of_element_located((By.XPATH, "//div[@class='signinbutton']"))).click()
 
         except Exception as ex:
@@ -306,7 +306,7 @@ class SeleniumController(SeleniumDriver):
 
                 downloaded_attachments.append(attachment_name_element.text)
                 attachment.click()
-                time.sleep(5)
+                sleep(5)
 
             return downloaded_attachments
 

@@ -4,13 +4,12 @@ import queue
 import random
 from typing import Optional, Type, Union
 
-from app_logger import app_logger
-
 # Import behaviour classes
 from behaviour.behaviour import BaseBehaviour
 from behaviour.models.behaviour import BehaviourCategory
 from behaviour.registry import BEHAVIOURS
 from cleanup_manager import CleanupManager
+from src.logger import app_logger
 
 parent_dir = os.path.dirname(os.path.abspath(__file__))
 config_file = os.path.join(parent_dir, "config.yml")
@@ -197,35 +196,37 @@ class BehaviourManager:
         """Terminates the currently running behaviour thread, if any."""
         try:
             if self.behaviour_thread is not None:
-                app_logger.info(f"Terminating behaviour: {self.behaviour_thread.id}")
+                behaviour_id = self.current_behaviour.id if self.current_behaviour else "unknown"
+                app_logger.info(f"Terminating behaviour: {behaviour_id}")
 
                 if self.behaviour_thread.is_alive():
                     self.behaviour_thread.stop()
-                    self.behaviour_thread.join(timeout=2.0)
 
                     if self.behaviour_thread.is_alive():
-                        app_logger.warning("Thread did not stop gracefully after 2 seconds")
+                        app_logger.warning("Thread did not stop gracefully in given timeout")
 
-                self.handle_behaviour_finish()
-                app_logger.info(
-                    f"Terminated behaviour: {self.current_behaviour.id if self.current_behaviour else 'unknown'}"
-                )
+                app_logger.info(f"Terminated behaviour: {behaviour_id}")
+                self._cleanup_behaviour_resources()
             else:
                 app_logger.info("No behaviour is currently running to terminate.")
         except Exception as ex:
             app_logger.error(f"Error while terminating behaviour: {ex}")
 
+    def _cleanup_behaviour_resources(self):
+        """Clean up runtime state after a behaviour has ended (by finishing or termination)."""
+        self.behaviour_thread = None
+        self.current_behaviour = None
+        self.cleanup_manager = None
+
     def handle_behaviour_finish(self):
-        """Handle cleanup when a behaviour finishes."""
+        """Handle cleanup when a behaviour finishes naturally."""
         if self.behaviour_thread is None:
             return
 
         if self.current_behaviour:
             app_logger.info(f"Behaviour '{self.current_behaviour.id}' finished")
 
-        self.behaviour_thread = None
-        self.current_behaviour = None
-        self.cleanup_manager = None
+        self._cleanup_behaviour_resources()
 
     def is_behaviour_running(self) -> bool:
         """Checks if a behaviour thread is currently running."""

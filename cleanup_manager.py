@@ -1,8 +1,9 @@
-from behaviour.selenium.selenium_controller import (
+from typing import Any, Callable, Dict, List, Optional, Union
+
+from lib.selenium.selenium_controller import (
     EdgeSeleniumController,
     FirefoxSeleniumController,
 )
-from typing import Callable, Dict, List, Any, Optional, Union
 
 
 class CleanupManager:

@@ -4,9 +4,9 @@ import sys
 
 import yaml
 
-import config_handler as config_handler
-from app_logger import app_logger
+import src.config.config_handler as config_handler
 from behaviour.consts import TEMPLATES_DIR
+from src.logger import app_logger
 
 emails_file = os.path.join(TEMPLATES_DIR, "emails.yml")
 
