@@ -1,32 +1,29 @@
-import time
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
-from behaviour.models.behaviour import BehaviourCategory
-from behaviour.scripts_pyautogui.browser_utils.browser_utils import BrowserUtils
-from behaviour.scripts_pyautogui.office_utils import office_utils
+from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
+from lib.autogui.actions.browser import Edge, Firefox
 from lib.selenium.email_web_client import EmailClientUser
 from lib.selenium.models import EmailClient
 from lib.selenium.selenium_controller import getSeleniumController
 from src.logger import app_logger
 
 
-class BehaviourWorkPowerpoint(BaseBehaviour):
+class BehaviourWorkPresentation(BaseBehaviour):
     """
-    Behaviour for working with Microsoft Powerpoint.
+    Behaviour for working on Presentation.
     NOTE: This behaviour is currently unfinished.
     """
 
     # Class-level metadata
-    id = "work_powerpoint"
-    display_name = "Work Powerpoint"
+    id = "work_presentation"
+    display_name = "Work Presentation"
     category = BehaviourCategory.IDLE
-    description = "Simulates work on Microsoft Powerpoint"
+    description = "Simulates work on Presentation"
 
     def __init__(self, cleanup_manager: CleanupManager):
         super().__init__(cleanup_manager)
@@ -51,6 +48,8 @@ class BehaviourWorkPowerpoint(BaseBehaviour):
         app_logger.info(f"Completed {self.id} behaviour")
 
     def web_behaviour(self):
+        browser = Firefox() if self.os_type == "Linux" else Edge()
+
         email_client_user: EmailClientUser = {
             "name": self.user["o365_email"].split(".")[0],
             "email": self.user["o365_email"],
@@ -65,21 +64,21 @@ class BehaviourWorkPowerpoint(BaseBehaviour):
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
 
         self.selenium_controller.maximize_driver_window()
-        time.sleep(4)
+        self.pool.sleep(4)
 
-        BrowserUtils.search_by_url("https://powerpoint.cloud.microsoft/")
+        self.pool.submit(browser.search_by_url, "https://powerpoint.cloud.microsoft/").result()
 
-        time.sleep(3)
+        self.pool.sleep(3)
 
         self.selenium_controller.wait(5).until(
             EC.presence_of_element_located((By.XPATH, "//button[text()='Sign in']"))
         ).click()
 
-        time.sleep(3)
+        self.pool.sleep(3)
 
-        email_client.login()
+        self.pool.submit(email_client.login).result()
 
-        time.sleep(3)
+        self.pool.sleep(3)
 
         self.selenium_controller.wait(5).until(
             EC.presence_of_element_located((By.XPATH, "//button[&data-testid='0300']"))
@@ -87,4 +86,4 @@ class BehaviourWorkPowerpoint(BaseBehaviour):
 
     def local_behaviour(self):
         self.cleanup_manager.add_cleanup_task(lambda: office_utils.close_app("powerpoint"))
-        office_utils.start_app("powerpoint")
+        self.pool.submit(office_utils.start_app, "powerpoint").result()

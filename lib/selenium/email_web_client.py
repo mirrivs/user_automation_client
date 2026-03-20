@@ -1,4 +1,4 @@
-from typing import List, TypedDict
+from typing import List
 
 import jinja2
 import pyautogui as pag
@@ -15,16 +15,10 @@ from selenium.webdriver.support.select import Select
 from behaviour.models.exceptions import BehaviourException
 from lib.cancellable_futures import sleep
 from lib.email_manager.email_manager import EmailManager
-from lib.selenium.models import EmailClient
+from lib.selenium.models import EmailClient, EmailClientUser
 from lib.selenium.selenium_driver import SeleniumDriver
 from lib.selenium.types import DriverType
 from src.logger import app_logger
-
-
-class EmailClientUser(TypedDict):
-    name: str
-    email: str
-    password: str
 
 
 class BaseEmailWebClient(SeleniumDriver):

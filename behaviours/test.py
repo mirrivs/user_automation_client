@@ -1,8 +1,8 @@
 import pyautogui
+from behaviour.scripts_pyautogui.win_utils.win_utils import open_explorer
 
 from behaviour.behaviour import BaseBehaviour
-from behaviour.models.behaviour import BehaviourCategory
-from behaviour.scripts_pyautogui.win_utils.win_utils import open_explorer
+from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
 from src.logger import app_logger
 

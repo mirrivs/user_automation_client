@@ -10,27 +10,24 @@ import time
 
 import pyautogui as pag
 
-from lib.autogui.search import locate_center_on_screen
-from lib.task_manager.task_manager import get_gui, task
+from lib.autogui import locate_image_center
+from lib.cancellable_futures.decorators import with_pool
 
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 
 
-@task
-def open_explorer(timeout: float = 5, **kwargs):
-    gui = get_gui()
-
-    name, location = gui.race(
+@with_pool
+def open_explorer(pool, timeout: int = 5, **kwargs):
+    name, location = pool.race(
         {
-            "find_explorer": lambda: locate_center_on_screen._func(
+            "find_explorer": lambda: locate_image_center(
                 os.path.join(PARENT_DIR, "explorer.png"), timeout=timeout, confidence=0.6, grayscale=True, **kwargs
             ),
-            "find_thunderbird": lambda: locate_center_on_screen._func(
+            "find_thunderbird": lambda: locate_image_center(
                 os.path.join(PARENT_DIR, "thunderbird.png"), timeout=timeout, confidence=0.6, grayscale=True, **kwargs
             ),
         }
     )
-
     return location
 
 

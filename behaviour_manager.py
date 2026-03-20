@@ -4,9 +4,8 @@ import queue
 import random
 from typing import Optional, Type, Union
 
-# Import behaviour classes
 from behaviour.behaviour import BaseBehaviour
-from behaviour.models.behaviour import BehaviourCategory
+from behaviour.models import BehaviourCategory
 from behaviour.registry import BEHAVIOURS
 from cleanup_manager import CleanupManager
 from src.logger import app_logger
@@ -20,22 +19,13 @@ class BehaviourManager:
     """
     Behaviour controller for automation.
     Controls the execution and tracking of automated behaviours using interruptible threads.
-
-    Uses behaviour instances directly instead of dictionaries for cleaner code.
     """
 
     def __init__(self, behaviour_classes: list[Type[BaseBehaviour]] = BEHAVIOURS):
-        """
-        Initialize the BehaviourManager.
-
-        Args:
-            behaviour_classes: List of behaviour classes to manage.
-                               Defaults to BEHAVIOURS if not provided.
-        """
         # Store behaviour classes by id
         self._behaviour_classes: dict[str, Type[BaseBehaviour]] = {}
 
-        # Store prototype instances for metadata (created with cleanup_manager=None)
+        # Store prototype instances for metadata
         cleanup_manager = CleanupManager()
         self._behaviour_prototypes: dict[str, BaseBehaviour] = {}
 
@@ -45,7 +35,6 @@ class BehaviourManager:
         # Initialize behaviours
         for behaviour_class in behaviour_classes:
             try:
-                # Create prototype instance to check availability and get metadata
                 prototype = behaviour_class(cleanup_manager)
                 behaviour_id = prototype.id
 
@@ -78,32 +67,32 @@ class BehaviourManager:
         self.cleanup_manager: Optional[CleanupManager] = None
 
         app_logger.info(
-            f"BehaviourManager initialized with {len(self._available_behaviour_ids)} available behaviours: {self._available_behaviour_ids}"
+            f"BehaviourManager initialized with {len(self._available_behaviour_ids)} "
+            f"available behaviours: {self._available_behaviour_ids}"
         )
+
+    # =========================================================================
+    # Properties
+    # =========================================================================
 
     @property
     def available_behaviours(self) -> dict[str, BaseBehaviour]:
-        """Get all available behaviour prototypes by id."""
         return {bid: self._behaviour_prototypes[bid] for bid in self._available_behaviour_ids}
 
     @property
     def all_behaviours(self) -> dict[str, BaseBehaviour]:
-        """Get all behaviour prototypes (available or not) by id."""
         return self._behaviour_prototypes.copy()
 
     @property
     def behaviours_by_category(self) -> dict[BehaviourCategory, list[BaseBehaviour]]:
-        """Get available behaviours organized by category."""
         return self._behaviours_by_category
 
     @property
     def idle_behaviours(self) -> list[BaseBehaviour]:
-        """Get available idle behaviours."""
         return self._behaviours_by_category.get(BehaviourCategory.IDLE, [])
 
     @property
     def attack_behaviours(self) -> list[BaseBehaviour]:
-        """Get available attack behaviours."""
         return self._behaviours_by_category.get(BehaviourCategory.ATTACK, [])
 
     # =========================================================================
@@ -123,10 +112,10 @@ class BehaviourManager:
 
         Args:
             behaviour_id: The ID of the behaviour to run.
-            force: If True, forcefully stop any running behaviour before starting.
+            force: If True, cooperatively stop any running behaviour before starting.
 
         Returns:
-            The started behaviour thread, or None if failed.
+            The started behaviour instance, or None if failed.
         """
         self._check_thread_status()
 
@@ -151,15 +140,12 @@ class BehaviourManager:
 
             app_logger.info(f"Starting behaviour: {behaviour_id}")
 
-            # Create cleanup manager for this behaviour
             self.cleanup_manager = CleanupManager()
 
-            # Create new instance of the behaviour class with cleanup manager
             behaviour_class = self._behaviour_classes[behaviour_id]
             self.behaviour_thread = behaviour_class(cleanup_manager=self.cleanup_manager)
             self.current_behaviour = self.behaviour_thread
 
-            # Start the behaviour thread
             self.behaviour_thread.start()
 
             app_logger.info(f"Behaviour '{behaviour_id}' started (Thread ID: {self.behaviour_thread.ident})")
@@ -169,16 +155,11 @@ class BehaviourManager:
 
         except Exception as ex:
             app_logger.error(f"Error while running behaviour {behaviour_id}: {ex}", exc_info=True)
-            self.current_behaviour = None
-            self.behaviour_thread = None
-            self.cleanup_manager = None
+            self._cleanup_behaviour_resources()
             return None
 
     def run_next_behaviour(self):
-        """
-        Runs the next behaviour from the queue if one is available.
-        Falls back to evaluate_next_idle_behaviour if queue is empty.
-        """
+        """Runs the next behaviour from the queue, or falls back to an idle behaviour."""
         try:
             self._check_thread_status()
 
@@ -193,27 +174,33 @@ class BehaviourManager:
             app_logger.error(f"Error while running next behaviour: {ex}")
 
     def terminate_behaviour(self):
-        """Terminates the currently running behaviour thread, if any."""
+        """Cooperatively stop the currently running behaviour, if any.
+
+        Calls stop() on the behaviour thread which:
+          1. Sets the shared cancel event (triggers OperationCancelled in tasks)
+          2. Joins with a timeout waiting for the thread to finish
+          3. The thread's run() method handles cleanup in its finally block
+        """
         try:
-            if self.behaviour_thread is not None:
-                behaviour_id = self.current_behaviour.id if self.current_behaviour else "unknown"
-                app_logger.info(f"Terminating behaviour: {behaviour_id}")
-
-                if self.behaviour_thread.is_alive():
-                    self.behaviour_thread.stop()
-
-                    if self.behaviour_thread.is_alive():
-                        app_logger.warning("Thread did not stop gracefully in given timeout")
-
-                app_logger.info(f"Terminated behaviour: {behaviour_id}")
-                self._cleanup_behaviour_resources()
-            else:
+            if self.behaviour_thread is None:
                 app_logger.info("No behaviour is currently running to terminate.")
+                return
+
+            behaviour_id = self.current_behaviour.id if self.current_behaviour else "unknown"
+            app_logger.info(f"Terminating behaviour: {behaviour_id}")
+
+            if self.behaviour_thread.is_alive():
+                self.behaviour_thread.stop()
+
+            app_logger.info(f"Terminated behaviour: {behaviour_id}")
+            self._cleanup_behaviour_resources()
+
         except Exception as ex:
-            app_logger.error(f"Error while terminating behaviour: {ex}")
+            app_logger.error(f"Error while terminating behaviour: {ex}", exc_info=True)
+            self._cleanup_behaviour_resources()
 
     def _cleanup_behaviour_resources(self):
-        """Clean up runtime state after a behaviour has ended (by finishing or termination)."""
+        """Clear runtime state after a behaviour has ended."""
         self.behaviour_thread = None
         self.current_behaviour = None
         self.cleanup_manager = None
@@ -237,24 +224,19 @@ class BehaviourManager:
             app_logger.error(f"Error while checking if behaviour is running: {ex}")
             return False
 
-    def evaluate_next_idle_behaviour(self) -> Union[str, None]:
-        """
-        Evaluates and returns the next idle behaviour to run.
-        Avoids recently executed idle behaviours to provide variety.
+    # =========================================================================
+    # Scheduling
+    # =========================================================================
 
-        Only considers idle history (not attacks or other categories)
-        when deciding which behaviours to exclude.
-        """
+    def evaluate_next_idle_behaviour(self) -> Union[str, None]:
+        """Pick the next idle behaviour, avoiding recent repeats."""
         try:
-            idle_behaviours = self._behaviours_by_category[BehaviourCategory.IDLE]
+            idle_behaviours = self._behaviours_by_category.get(BehaviourCategory.IDLE, [])
 
             if not idle_behaviours:
                 return None
 
             idle_ids = {b.id for b in idle_behaviours}
-
-            # Filter history to only idle behaviours so that attack runs
-            # don't waste exclusion slots and cause idle repeats.
             idle_history = [bid for bid in self.behaviour_history if bid in idle_ids]
 
             if not idle_history:
@@ -274,27 +256,6 @@ class BehaviourManager:
             idle_behaviours = self.list_behaviours_by_category(BehaviourCategory.IDLE)
             return idle_behaviours[0].id if idle_behaviours else None
 
-    def get_behaviour(self, behaviour_id: str) -> Union[BaseBehaviour, None]:
-        """Get the prototype instance for a specific behaviour."""
-        return self._behaviour_prototypes.get(behaviour_id)
-
-    def get_behaviour_class(self, behaviour_id: str) -> Union[Type[BaseBehaviour], None]:
-        """Get the class for a specific behaviour."""
-        return self._behaviour_classes.get(behaviour_id)
-
-    def get_current_behaviour_status(self) -> dict:
-        """Get detailed status information about the current behaviour."""
-        if self.behaviour_thread is None:
-            return {
-                "running": False,
-                "current_behaviour": None,
-            }
-
-        return {
-            "running": self.behaviour_thread.is_alive(),
-            "current_behaviour": self.current_behaviour,
-        }
-
     def queue_behaviour(self, behaviour_id: str, priority: int = 0):
         """Add a behaviour to the queue with the specified priority."""
         if behaviour_id not in self._available_behaviour_ids:
@@ -304,6 +265,24 @@ class BehaviourManager:
         self.behaviour_queue.put((priority, behaviour_id))
         app_logger.info(f"Queued behaviour '{behaviour_id}' with priority {priority}")
 
+    # =========================================================================
+    # Lookups
+    # =========================================================================
+
+    def get_behaviour(self, behaviour_id: str) -> Union[BaseBehaviour, None]:
+        return self._behaviour_prototypes.get(behaviour_id)
+
+    def get_behaviour_class(self, behaviour_id: str) -> Union[Type[BaseBehaviour], None]:
+        return self._behaviour_classes.get(behaviour_id)
+
+    def get_current_behaviour_status(self) -> dict:
+        if self.behaviour_thread is None:
+            return {"running": False, "current_behaviour": None}
+
+        return {
+            "running": self.behaviour_thread.is_alive(),
+            "current_behaviour": self.current_behaviour,
+        }
+
     def list_behaviours_by_category(self, category: BehaviourCategory) -> list[BaseBehaviour]:
-        """Get a list of behaviour IDs for a specific category."""
         return [b for b in self._behaviours_by_category.get(category, [])]

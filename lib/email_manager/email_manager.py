@@ -5,10 +5,9 @@ import sys
 import yaml
 
 import src.config.config_handler as config_handler
-from behaviour.consts import TEMPLATES_DIR
 from src.logger import app_logger
 
-emails_file = os.path.join(TEMPLATES_DIR, "emails.yml")
+emails_file = os.path.join(os.path.dirname(__file__), "emails.yml")
 
 
 class EmailManager:

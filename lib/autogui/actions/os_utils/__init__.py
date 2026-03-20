@@ -10,6 +10,7 @@ import platform
 import sys
 
 import pyautogui as pag
+from exceptions import OperationCancelled
 
 from lib.autogui import write
 from lib.cancellable_futures import sleep
@@ -56,10 +57,10 @@ def close_terminal():
         else:
             write("exit", 0.1)
             pag.press("enter")
-
+    except OperationCancelled:
+        raise
     except Exception as ex:
         app_logger.error(f"Error closing terminal, Ex: {ex}")
-        sys.exit(1)
 
 
 def write_file(filename, text):

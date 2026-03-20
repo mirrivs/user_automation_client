@@ -1,5 +1,4 @@
 import platform
-import sys
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -7,11 +6,10 @@ from selenium.webdriver.common.by import By
 from app_config import app_config, automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
-from behaviour.models.behaviour import BehaviourCategory
+from behaviour.models import BehaviourCategory
 from behaviour.models.config import AttackPhishingCfg
-from behaviour.scripts_pyautogui.browser_utils.browser_utils import Edge, Firefox
 from cleanup_manager import CleanupManager
-from lib.cancellable_futures import sleep
+from lib.autogui.actions.browser import Edge, Firefox
 from lib.selenium.email_web_client import EmailClientUser
 from lib.selenium.models import EmailClient
 from lib.selenium.selenium_controller import getSeleniumController
@@ -60,18 +58,18 @@ class BehaviourAttackPhishing(BaseBehaviour):
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
 
         self.selenium_controller.maximize_driver_window()
-        sleep(4)
+        self.pool.sleep(4)
 
-        browser.search_by_url(self.general_cfg["organization_mail_server_url"])
+        self.pool.submit(browser.search_by_url, self.general_cfg["organization_mail_server_url"]).result()
 
-        self.email_client.login()
+        self.pool.submit(self.email_client.login).result()
 
         if self.email_client.type == EmailClient.ROUNDCUBE:
-            self.selenium_controller.roundcube_set_language()
+            self.pool.submit(self.selenium_controller.roundcube_set_language).result()
 
-        sleep(4)
+        self.pool.sleep(4)
 
-        unread_emails = self.email_client.get_unread_emails()
+        unread_emails = self.pool.submit(self.email_client.get_unread_emails).result()
 
         for email in unread_emails:
             if self.email_client.type == EmailClient.ROUNDCUBE:
@@ -86,10 +84,10 @@ class BehaviourAttackPhishing(BaseBehaviour):
 
         if self.email_client.type == EmailClient.ROUNDCUBE:
             iframe = self.selenium_controller.driver.find_element(By.NAME, "messagecontframe")
-            sleep(1)
+            self.pool.sleep(1)
             self.selenium_controller.driver.switch_to.frame(iframe)
 
-        self.email_client.email_allow_files()
+        self.pool.submit(self.email_client.email_allow_files).result()
         found_phishing_link = False
 
         try:
@@ -100,12 +98,16 @@ class BehaviourAttackPhishing(BaseBehaviour):
             if self.email_client.type == EmailClient.ROUNDCUBE:
                 self.selenium_controller.driver.switch_to.default_content()
             found_phishing_link = True
-            sleep(2)
+            self.pool.sleep(2)
 
             self.selenium_controller.switch_tab()
-            self.selenium_controller.phishing_enter_credentials(self.user["domain_email"], self.user["domain_password"])
-            sleep(1)
-            browser.close_latest_tab()
+            self.pool.submit(
+                self.selenium_controller.phishing_enter_credentials,
+                self.user["domain_email"],
+                self.user["domain_password"],
+            ).result()
+            self.pool.sleep(1)
+            self.pool.submit(browser.close_latest_tab).result()
 
             app_logger.info("Entered phishing credentials")
         except NoSuchElementException:
@@ -115,6 +117,6 @@ class BehaviourAttackPhishing(BaseBehaviour):
             self.selenium_controller.switch_tab()
         else:
             app_logger.error("No phishing link found")
-            sys.exit(1)
+            raise RuntimeError("No phishing link found")
 
         app_logger.info(f"Completed {self.id} behaviour")

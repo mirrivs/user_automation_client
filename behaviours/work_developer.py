@@ -1,14 +1,13 @@
 import os
 import platform
 import random
-import time
 
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
-from behaviour.consts import TEMPLATES_DIR
-from behaviour.models.behaviour import BehaviourCategory
-from behaviour.scripts_pyautogui.os_utils import os_utils
+from behaviour.models import BehaviourCategory
+from behaviours.consts import TEMPLATES_DIR
 from cleanup_manager import CleanupManager
+from lib.autogui.actions import os_utils
 from src.logger import app_logger
 
 LINUX_FILE = os.path.join(TEMPLATES_DIR, "c_program.txt")
@@ -39,15 +38,15 @@ class BehaviourWorkDeveloper(BaseBehaviour):
 
     @classmethod
     def is_available(cls) -> bool:
-        return False
+        return cls.os_type in ["Windows"]
 
     def run_behaviour(self):
         app_logger.info("Starting work_developer behaviour")
 
-        os_utils.open_terminal()
+        self.pool.submit(os_utils.open_terminal).result()
         self.cleanup_manager.add_cleanup_task(os_utils.close_terminal)
 
-        time.sleep(2)
+        self.pool.sleep(2)
 
         file_content = "Placeholder text"
 
@@ -59,18 +58,18 @@ class BehaviourWorkDeveloper(BaseBehaviour):
             with open(WINDOWS_FILE, "r", encoding="utf-8") as file:
                 file_content = file.read()
 
-        os_utils.write_file(self.filename, file_content)
+        self.pool.submit(os_utils.write_file, self.filename, file_content).result()
 
         self.cleanup_manager.add_cleanup_task(os_utils.delete_file, self.filename)
 
-        time.sleep(1)
+        self.pool.sleep(1)
 
         if self.os_type == "Linux":
-            os_utils.run_c_program(self.filename)
+            self.pool.submit(os_utils.run_c_program, self.filename).result()
         else:
-            os_utils.run_ps_program(self.filename)
+            self.pool.submit(os_utils.run_ps_program, self.filename).result()
 
-        time.sleep(4)
+        self.pool.sleep(4)
 
         file_cleanup_task = self.cleanup_manager.pop_cleanup_task()
         file_cleanup_task["function"](*file_cleanup_task.get("args", ()), **file_cleanup_task.get("kwargs", {}))

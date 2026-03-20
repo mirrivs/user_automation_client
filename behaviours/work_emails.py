@@ -1,12 +1,12 @@
 import platform
-import time
 
 from app_config import automation_config
-from behaviour.behaviour import BaseBehaviour, BehaviourCategory
+from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.models import BehaviourCategory
 from behaviour.models.config import WorkEmailsCfg
-from behaviour.scripts_pyautogui.browser_utils.browser_utils import Edge
 from cleanup_manager import CleanupManager
+from lib.autogui.actions.browser import Edge
 from lib.email_manager.email_manager import EmailManager
 from lib.selenium.email_web_client import EmailClientUser
 from lib.selenium.models import EmailClient
@@ -58,21 +58,21 @@ class BehaviourWorkEmails(BaseBehaviour):
         self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
 
         self.selenium_controller.maximize_driver_window()
-        time.sleep(4)
+        self.pool.sleep(4)
 
-        browser.search_by_url(self.general_cfg["organization_mail_server_url"])
+        self.pool.submit(browser.search_by_url, self.general_cfg["organization_mail_server_url"]).result()
 
-        email_client.login()
+        self.pool.submit(email_client.login).result()
 
         if email_client.type == EmailClient.ROUNDCUBE:
-            self.selenium_controller.roundcube_set_language()
+            self.pool.submit(self.selenium_controller.roundcube_set_language).result()
 
         # Wait for the web to fully load
-        time.sleep(6)
+        self.pool.sleep(6)
 
-        unread_emails = email_client.get_unread_emails()
+        unread_emails = self.pool.submit(email_client.get_unread_emails).result()
 
-        responded_count = email_client.reply_to_emails(unread_emails)
+        responded_count = self.pool.submit(email_client.reply_to_emails, unread_emails).result()
 
         if not responded_count and self.config.get("is_conversation_starter", False):
             email_receivers = self.config.get("email_receivers")
@@ -83,6 +83,6 @@ class BehaviourWorkEmails(BaseBehaviour):
                 return
 
             email = self.email_manager.get_email_starter()
-            email_client.send_email(email_receivers, email["subject"], email["email_body"])
+            self.pool.submit(email_client.send_email, email_receivers, email["subject"], email["email_body"]).result()
 
         app_logger.info("Completed work_emails behaviour")
