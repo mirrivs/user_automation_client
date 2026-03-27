@@ -38,7 +38,8 @@ class BehaviourWorkDeveloper(BaseBehaviour):
 
     @classmethod
     def is_available(cls) -> bool:
-        return cls.os_type in ["Windows"]
+        return False
+        # cls.os_type in ["Windows"]
 
     def run_behaviour(self):
         app_logger.info("Starting work_developer behaviour")

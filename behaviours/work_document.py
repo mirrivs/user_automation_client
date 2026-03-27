@@ -51,9 +51,9 @@ class BehaviourWorkDocument(BaseBehaviour):
         browser = Firefox() if self.os_type == "Linux" else Edge()
 
         email_client_user: EmailClientUser = {
-            "name": self.user["o365_email"].split(".")[0],
-            "email": self.user["o365_email"],
-            "password": self.user["o365_password"],
+            "name": self.user["external_email"].split(".")[0],
+            "email": self.user["external_email"],
+            "password": self.user["external_password"],
         }
 
         self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)

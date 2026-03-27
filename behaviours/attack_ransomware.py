@@ -43,9 +43,9 @@ class BehaviourAttackRansomware(BaseBehaviour):
         app_logger.info(f"Starting {self.id} behaviour")
         is_o365 = self.email_client_type == EmailClient.O365
         email_client_user: EmailClientUser = {
-            "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
-            "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
-            "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
+            "name": (self.user["external_email"] if is_o365 else self.user["internal_email"]).split(".")[0],
+            "email": self.user["external_email"] if is_o365 else self.user["internal_email"],
+            "password": self.user["external_password"] if is_o365 else self.user["internal_password"],
         }
 
         browser = Firefox() if self.os_type == "Linux" else Edge()

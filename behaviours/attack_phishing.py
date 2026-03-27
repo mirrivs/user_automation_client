@@ -45,9 +45,9 @@ class BehaviourAttackPhishing(BaseBehaviour):
 
         is_o365 = self.email_client_type == EmailClient.O365
         email_client_user: EmailClientUser = {
-            "name": (self.user["o365_email"] if is_o365 else self.user["domain_email"]).split(".")[0],
-            "email": self.user["o365_email"] if is_o365 else self.user["domain_email"],
-            "password": self.user["o365_password"] if is_o365 else self.user["domain_password"],
+            "name": (self.user["external_email"] if is_o365 else self.user["internal_email"]).split(".")[0],
+            "email": self.user["external_email"] if is_o365 else self.user["internal_email"],
+            "password": self.user["external_password"] if is_o365 else self.user["internal_password"],
         }
 
         browser = Firefox() if self.os_type == "Linux" else Edge()
@@ -103,8 +103,8 @@ class BehaviourAttackPhishing(BaseBehaviour):
             self.selenium_controller.switch_tab()
             self.pool.submit(
                 self.selenium_controller.phishing_enter_credentials,
-                self.user["domain_email"],
-                self.user["domain_password"],
+                self.user["internal_email"],
+                self.user["internal_password"],
             ).result()
             self.pool.sleep(1)
             self.pool.submit(browser.close_latest_tab).result()

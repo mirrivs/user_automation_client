@@ -58,11 +58,11 @@ class UserAutomationManager:
     def _authenticate_with_server(self) -> bool:
         """Authenticate with the server and get access token"""
         try:
-            username = automation_config["general"]["user"]["domain_email"]
-            password = automation_config["general"]["user"]["domain_password"]
+            username = automation_config["general"]["user"]["internal_email"]
+            password = automation_config["general"]["user"]["internal_password"]
             if automation_config["general"]["enable_o365"]:
-                username = automation_config["general"]["user"]["o365_email"]
-                password = automation_config["general"]["user"]["o365_password"]
+                username = automation_config["general"]["user"]["external_email"]
+                password = automation_config["general"]["user"]["external_password"]
 
             hostname = socket.gethostname()
 

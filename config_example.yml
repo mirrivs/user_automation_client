@@ -13,10 +13,10 @@ automation:
     organization_web_url: "https://www.domain.internal"
     archive_path: C:/Archive
     user:
-      domain_email: "userplaceholder"
-      domain_password: "passwordplaceholder"
-      o365_email: "userplaceholder"
-      o365_email: "passwordplaceholder"
+      internal_email: "userplaceholder"
+      internal_password: "passwordplaceholder"
+      external_email: "userplaceholder"
+      external_email: "passwordplaceholder"
   idle_cycle:
     procrastination_chance: -1.0
   behaviours:

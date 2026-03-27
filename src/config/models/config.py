@@ -4,10 +4,10 @@ from lib.selenium.models import EmailClient
 
 
 class User(TypedDict):
-    domain_email: str
-    domain_password: str
-    o365_email: str
-    o365_password: str
+    internal_email: str
+    internal_password: str
+    external_email: str
+    external_password: str
 
 
 class IdleCycle(TypedDict):

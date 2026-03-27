@@ -10,10 +10,10 @@ import platform
 import sys
 
 import pyautogui as pag
-from exceptions import OperationCancelled
 
 from lib.autogui import write
 from lib.cancellable_futures import sleep
+from lib.cancellable_futures.exceptions import OperationCancelled
 from src.logger import app_logger
 
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
