@@ -11,7 +11,7 @@ import sys
 
 import pyautogui as pag
 
-from lib.autogui import write
+from lib.autogui import locate_image_center, write
 from lib.cancellable_futures import sleep
 from lib.cancellable_futures.exceptions import OperationCancelled
 from src.logger import app_logger
@@ -19,6 +19,40 @@ from src.logger import app_logger
 PARENT_DIR = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 
 os_type = platform.system()
+
+
+def start_app(app_name: str, app_image: str, **kwargs):
+    """
+    Open app launcher, search for app by name, then click its icon using image recognition.\n
+    Prerequisites:
+        - App icon image saved at app_image path
+    Args:
+        app_name: Name to type into the app launcher search
+        app_image: Path to screenshot of the app icon/tile to click
+    """
+    try:
+        if os_type == "Linux":
+            pag.press("win")
+            sleep(1)
+            write(app_name, 0.1)
+        else:
+            pag.hotkey("win", "s")
+            sleep(1)
+            write(app_name, 0.1)
+
+        app_logger.info(f"Searching for app icon: {app_image}")
+        location = locate_image_center(app_image, **kwargs)
+        pag.click(location)
+        app_logger.info(f"Clicked app icon for '{app_name}'")
+
+    except TimeoutError:
+        app_logger.error(f"App icon not found on screen in given timeout: {app_image}")
+        raise
+    except OperationCancelled:
+        raise
+    except Exception as ex:
+        app_logger.error(f"Error starting app '{app_name}', Ex: {ex}")
+        raise
 
 
 def open_terminal():

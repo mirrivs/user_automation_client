@@ -2,10 +2,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from app_config import automation_config
+from behaviour import get_image_path
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
 from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
+from lib.autogui.actions import os_utils
 from lib.autogui.actions.browser import Edge, Firefox
 from lib.selenium.email_web_client import EmailClientUser
 from lib.selenium.models import EmailClient
@@ -40,7 +42,7 @@ class BehaviourWorkDocument(BaseBehaviour):
     def run_behaviour(self):
         app_logger.info(f"Starting {self.id} behaviour")
 
-        if automation_config["general"]["enable_o365"]:
+        if self.general_cfg["enable_o365"]:
             self.web_behaviour()
         else:
             self.local_behaviour()
@@ -85,5 +87,19 @@ class BehaviourWorkDocument(BaseBehaviour):
         ).click()
 
     def local_behaviour(self):
-        self.cleanup_manager.add_cleanup_task(lambda: office_utils.close_app("word"))
-        self.pool.submit(office_utils.start_app, "word").result()
+        try:
+            app_logger.info("Attempting to open Microsoft Word")
+            # self.cleanup_manager.add_cleanup_task(lambda: os_utils.close_app("word"))
+            self.pool.submit(os_utils.start_app, "word", get_image_path("apps/ms_office/word/icon.png")).result()
+            app_logger.info("Microsoft Word opened successfully")
+
+        except TimeoutError:
+            app_logger.warning("Word not found, falling back to LibreOffice Writer")
+            # self.cleanup_manager.add_cleanup_task(lambda: os_utils.close_app("soffice"))
+            self.pool.submit(
+                os_utils.start_app,
+                "libreoffice writer",
+                get_image_path("apps/libre_office/writer/icon.png"),
+                grayscale=True,
+            ).result()
+            app_logger.info("LibreOffice Writer opened successfully")

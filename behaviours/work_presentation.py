@@ -35,7 +35,8 @@ class BehaviourWorkPresentation(BaseBehaviour):
 
     @classmethod
     def is_available(cls) -> bool:
-        return cls.os_type == "Windows"
+        return False
+        # cls.os_type == "Windows"
 
     def run_behaviour(self):
         app_logger.info(f"Starting {self.id} behaviour")

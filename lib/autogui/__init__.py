@@ -1,3 +1,5 @@
+import time
+
 import pyautogui
 
 from lib.cancellable_futures import check, sleep
@@ -17,16 +19,15 @@ def write(message: str, interval: float = 0):
 
 
 def locate_image_center(image, timeout=10, **kwargs):
-    import time
-
-    import pyautogui
-
     start = time.monotonic()
     while True:
         check()
-        loc = pyautogui.locateCenterOnScreen(image, **kwargs)
-        if loc:
-            return loc
+        try:
+            loc = pyautogui.locateCenterOnScreen(image, **kwargs)
+            if loc:
+                return loc
+        except pyautogui.ImageNotFoundException:
+            pass
         if time.monotonic() - start >= timeout:
             raise TimeoutError(f"'{image}' not found")
         sleep(0.1)
