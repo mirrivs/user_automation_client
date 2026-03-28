@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviour.models.config import AttackReverseShellCfg
 from cleanup_manager import CleanupManager
@@ -23,7 +24,7 @@ class BehaviourAttackReverseShell(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "attack_reverse_shell"
+    id: BehaviourId = "attack_reverse_shell"
     display_name = "Reverse Shell"
     category = BehaviourCategory.ATTACK
     description = "Reverse shell attack - downloads and opens malicious attachment from email"
@@ -125,3 +126,4 @@ class BehaviourAttackReverseShell(BaseBehaviour):
                 pag.press("enter")
 
         app_logger.info("Completed attack_reverse_shell behaviour")
+

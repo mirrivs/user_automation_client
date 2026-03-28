@@ -4,6 +4,7 @@ from datetime import datetime
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviour.models.config import ProcrastinationCfg
 from cleanup_manager import CleanupManager
@@ -24,7 +25,7 @@ class BehaviourProcrastination(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "procrastination"
+    id: BehaviourId = "procrastination"
     display_name = "Procrastination"
     category = BehaviourCategory.IDLE
     description = "Simulates procrastination activities like browsing"
@@ -97,3 +98,4 @@ class BehaviourProcrastination(BaseBehaviour):
             app_logger.warning(f"Unknown test preference: {selected_preference}")
 
         app_logger.info(f"Completed {self.id} behaviour")
+

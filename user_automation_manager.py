@@ -34,7 +34,7 @@ class UserAutomationManager:
         self.config: AppConfig = config
 
         # BehaviourManager automatically discovers available behaviours
-        self.behaviour_manager = BehaviourManager(BEHAVIOURS)
+        self.behaviour_manager = BehaviourManager(BEHAVIOURS, self.config)
 
         self.behaviour_cycle_thread = threading.Thread(
             target=self._run_behaviour_cycle, name="Behaviour cycle thread", daemon=True
@@ -70,14 +70,12 @@ class UserAutomationManager:
                 logger.error("Username or password not configured")
                 return False
 
-            # Prepare authentication data
             auth_data = {
                 "username": username,
                 "password": password,
                 "hostname": hostname,
             }
 
-            # Send authentication request
             auth_url = f"{app_config['app']['user_automation_server_http']}/client/connect"
             logger.info(f"Authenticating with server at {auth_url}")
 
@@ -92,16 +90,15 @@ class UserAutomationManager:
                 auth_response = response.json()
                 self.access_token = auth_response.get("access_token")
 
-                # Merge server config with local config
                 server_config = auth_response.get("client_config", {})
                 if server_config:
                     self._merge_config(server_config)
 
                 logger.info("Successfully authenticated with server")
                 return True
-            else:
-                logger.error(f"Authentication failed: {response.status_code}")
-                return False
+
+            logger.error(f"Authentication failed: {response.status_code}")
+            return False
 
         except requests.RequestException as e:
             logger.error(f"Error during authentication: {e}")
@@ -117,11 +114,8 @@ class UserAutomationManager:
 
             logger.info(f"Connecting to WebSocket at {ws_url}")
 
-            # Create WebSocket connection
             self.websocket_connection = websocket.WebSocket()
             self.websocket_connection.connect(ws_url)
-
-            # Send authentication token
             self.websocket_connection.send(str(self.access_token))
 
             logger.info("WebSocket connection established")
@@ -170,6 +164,7 @@ class UserAutomationManager:
     def _merge_config(self, new_config: dict[str, Any]):
         try:
             self._deep_merge_dict(cast(dict[str, Any], self.config), new_config)
+            self.behaviour_manager.refresh_availability(self.config)
             save_app_config(self.config)
             logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
         except Exception as e:
@@ -187,7 +182,6 @@ class UserAutomationManager:
     def _update_behaviour_config(self, behaviour_id: str, behaviour_config: dict):
         """Update configuration for a specific behaviour and save to file"""
         try:
-            # Ensure the nested structure exists
             if "automation" not in self.config:
                 self.config["automation"] = {}
             if "behaviours" not in self.config["automation"]:
@@ -197,6 +191,7 @@ class UserAutomationManager:
 
             self.config["automation"]["behaviours"][behaviour_id] = behaviour_config
 
+            self.behaviour_manager.refresh_availability(self.config)
             save_app_config(self.config)
 
             logger.info(f"Behaviour configuration updated and saved for {behaviour_id}")
@@ -211,7 +206,6 @@ class UserAutomationManager:
             if not self.websocket_connection:
                 return
 
-            # Serialize current_behaviour - it's now a BaseBehaviour instance
             current_behaviour_data = None
             if self.behaviour_manager.current_behaviour:
                 current_behaviour_data = {
@@ -254,10 +248,8 @@ class UserAutomationManager:
                     else:
                         logger.error("Failed to authenticate with server")
 
-                # Handle WebSocket messages
                 if self.is_connected and self.websocket_connection:
                     try:
-                        # Check for incoming messages (non-blocking)
                         self.websocket_connection.settimeout(1.0)
                         message = self.websocket_connection.recv()
 
@@ -265,7 +257,6 @@ class UserAutomationManager:
                             self._handle_websocket_message(str(message))
 
                     except websocket.WebSocketTimeoutException:
-                        # Timeout is expected for non-blocking receive
                         pass
                     except websocket.WebSocketConnectionClosedException:
                         logger.warning("WebSocket connection closed by server")
@@ -276,7 +267,6 @@ class UserAutomationManager:
                         self.is_connected = False
                         self.websocket_connection = None
 
-                # Send periodic status updates
                 if self.is_connected:
                     self._send_status_update()
 
@@ -304,11 +294,9 @@ class UserAutomationManager:
                 config_changed = old_config != self.config
                 if config_changed:
                     old_config = self.config.copy()
-
-                if config_changed:
+                    self.behaviour_manager.refresh_availability(self.config)
                     logger.info("Configuration changed - behaviour manager reloaded")
 
-                # Run next behaviour if cycle is running and no behaviour is currently active
                 if (
                     self.idle_cycle_status == IdleCycleStatus.RUNNING
                     and not self.behaviour_manager.is_behaviour_running()
@@ -319,7 +307,7 @@ class UserAutomationManager:
 
             except Exception as e:
                 logger.error(f"Error in behaviour cycle: {e}")
-                time.sleep(5)  # Wait before retrying
+                time.sleep(5)
 
     def start(self):
         """Start both behaviour cycle and server connection threads"""
@@ -347,7 +335,7 @@ class UserAutomationManager:
     def get_behaviour_config(self, behaviour_id: str):
         """Get configuration for a specific behaviour"""
         try:
-            return self.config.get("behaviour", {}).get("behaviours", {}).get(behaviour_id, {}).copy()
+            return self.config.get("automation", {}).get("behaviours", {}).get(behaviour_id, {}).copy()
         except Exception:
             return {}
 

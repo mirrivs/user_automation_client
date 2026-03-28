@@ -1,18 +1,16 @@
-import os
-import platform
 import queue
 import random
 from typing import Optional, Type, Union
 
+from app_config import app_config
 from behaviour.behaviour import BaseBehaviour
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
-from behaviour.registry import BEHAVIOURS
+from behaviour.registry import BEHAVIOURS, validate_behaviour_registry
 from cleanup_manager import CleanupManager
+from src.config.config_handler import get_automation_config, is_behaviour_enabled_in_config
+from src.config.models.config import AppConfig
 from src.logger import app_logger
-
-parent_dir = os.path.dirname(os.path.abspath(__file__))
-config_file = os.path.join(parent_dir, "config.yml")
-os_type = platform.system()
 
 
 class BehaviourManager:
@@ -21,47 +19,40 @@ class BehaviourManager:
     Controls the execution and tracking of automated behaviours using interruptible threads.
     """
 
-    def __init__(self, behaviour_classes: list[Type[BaseBehaviour]] = BEHAVIOURS):
+    def __init__(
+        self,
+        behaviour_classes: list[Type[BaseBehaviour]] = BEHAVIOURS,
+        config: AppConfig = app_config,
+    ):
+        validate_behaviour_registry(behaviour_classes)
+
+        self.config = config
+
         # Store behaviour classes by id
-        self._behaviour_classes: dict[str, Type[BaseBehaviour]] = {}
+        self._behaviour_classes: dict[BehaviourId, Type[BaseBehaviour]] = {}
 
         # Store prototype instances for metadata
-        cleanup_manager = CleanupManager()
-        self._behaviour_prototypes: dict[str, BaseBehaviour] = {}
+        prototype_cleanup_manager = CleanupManager()
+        self._behaviour_prototypes: dict[BehaviourId, BaseBehaviour] = {}
 
         # Track which behaviours are available
-        self._available_behaviour_ids: list[str] = []
+        self._available_behaviour_ids: list[BehaviourId] = []
 
-        # Initialize behaviours
         for behaviour_class in behaviour_classes:
+            behaviour_id = behaviour_class.id
+            self._behaviour_classes[behaviour_id] = behaviour_class
+
             try:
-                prototype = behaviour_class(cleanup_manager)
-                behaviour_id = prototype.id
-
-                self._behaviour_classes[behaviour_id] = behaviour_class
-                self._behaviour_prototypes[behaviour_id] = prototype
-
-                if prototype.is_available and prototype.is_available():
-                    self._available_behaviour_ids.append(behaviour_id)
-                    app_logger.debug(f"Behaviour '{behaviour_id}' is available")
-                else:
-                    app_logger.debug(f"Behaviour '{behaviour_id}' is NOT available on this system")
-
+                self._behaviour_prototypes[behaviour_id] = behaviour_class(prototype_cleanup_manager)
             except Exception as ex:
                 app_logger.warning(f"Failed to initialize behaviour class {behaviour_class.__name__}: {ex}")
 
-        # Organize by category
         self._behaviours_by_category: dict[BehaviourCategory, list[BaseBehaviour]] = {}
-        for behaviour_id in self._available_behaviour_ids:
-            prototype = self._behaviour_prototypes[behaviour_id]
-            category = prototype.category
-            if category not in self._behaviours_by_category:
-                self._behaviours_by_category[category] = []
-            self._behaviours_by_category[category].append(prototype)
+        self.refresh_availability(config)
 
         # Runtime state
-        self.behaviour_queue = queue.PriorityQueue()
-        self.behaviour_history: list[str] = []
+        self.behaviour_queue: queue.PriorityQueue[tuple[int, BehaviourId]] = queue.PriorityQueue()
+        self.behaviour_history: list[BehaviourId] = []
         self.current_behaviour: Optional[BaseBehaviour] = None
         self.behaviour_thread: Optional[BaseBehaviour] = None
         self.cleanup_manager: Optional[CleanupManager] = None
@@ -71,16 +62,12 @@ class BehaviourManager:
             f"available behaviours: {self._available_behaviour_ids}"
         )
 
-    # =========================================================================
-    # Properties
-    # =========================================================================
-
     @property
-    def available_behaviours(self) -> dict[str, BaseBehaviour]:
+    def available_behaviours(self) -> dict[BehaviourId, BaseBehaviour]:
         return {bid: self._behaviour_prototypes[bid] for bid in self._available_behaviour_ids}
 
     @property
-    def all_behaviours(self) -> dict[str, BaseBehaviour]:
+    def all_behaviours(self) -> dict[BehaviourId, BaseBehaviour]:
         return self._behaviour_prototypes.copy()
 
     @property
@@ -95,18 +82,42 @@ class BehaviourManager:
     def attack_behaviours(self) -> list[BaseBehaviour]:
         return self._behaviours_by_category.get(BehaviourCategory.ATTACK, [])
 
-    # =========================================================================
-    # Behaviour execution
-    # =========================================================================
+    def refresh_availability(self, config: Optional[AppConfig] = None) -> None:
+        if config is not None:
+            self.config = config
+
+        get_automation_config(self.config)
+        self._available_behaviour_ids = []
+        self._behaviours_by_category = {}
+
+        for behaviour_id, behaviour_class in self._behaviour_classes.items():
+            prototype = self._behaviour_prototypes.get(behaviour_id)
+            if prototype is None:
+                app_logger.warning(f"Behaviour '{behaviour_id}' has no prototype instance; marking unavailable")
+                continue
+
+            runtime_available = bool(behaviour_class.is_available())
+            config_enabled = is_behaviour_enabled_in_config(self.config, behaviour_id)
+            final_available = runtime_available and config_enabled
+
+            app_logger.debug(
+                f"Behaviour '{behaviour_id}' availability: "
+                f"runtime_available={runtime_available}, config_enabled={config_enabled}"
+            )
+
+            if not final_available:
+                continue
+
+            self._available_behaviour_ids.append(behaviour_id)
+            self._behaviours_by_category.setdefault(prototype.category, []).append(prototype)
 
     def _check_thread_status(self):
         """Check if the current behaviour thread has finished and handle cleanup if needed."""
-        if self.behaviour_thread is not None:
-            if not self.behaviour_thread.is_alive():
-                app_logger.info("Behaviour thread finished")
-                self.handle_behaviour_finish()
+        if self.behaviour_thread is not None and not self.behaviour_thread.is_alive():
+            app_logger.info("Behaviour thread finished")
+            self.handle_behaviour_finish()
 
-    def run_behaviour(self, behaviour_id: str, force: bool = False) -> Union[BaseBehaviour, None]:
+    def run_behaviour(self, behaviour_id: Union[BehaviourId, str], force: bool = False) -> Union[BaseBehaviour, None]:
         """
         Executes a behaviour in an interruptible thread.
 
@@ -135,7 +146,7 @@ class BehaviourManager:
                 return None
 
             if behaviour_id not in self._available_behaviour_ids:
-                app_logger.error(f"Behaviour '{behaviour_id}' is not available on this system")
+                app_logger.error(f"Behaviour '{behaviour_id}' is not available on this system or disabled in config")
                 return None
 
             app_logger.info(f"Starting behaviour: {behaviour_id}")
@@ -224,11 +235,7 @@ class BehaviourManager:
             app_logger.error(f"Error while checking if behaviour is running: {ex}")
             return False
 
-    # =========================================================================
-    # Scheduling
-    # =========================================================================
-
-    def evaluate_next_idle_behaviour(self) -> Union[str, None]:
+    def evaluate_next_idle_behaviour(self) -> Union[BehaviourId, None]:
         """Pick the next idle behaviour, avoiding recent repeats."""
         try:
             idle_behaviours = self._behaviours_by_category.get(BehaviourCategory.IDLE, [])
@@ -256,7 +263,7 @@ class BehaviourManager:
             idle_behaviours = self.list_behaviours_by_category(BehaviourCategory.IDLE)
             return idle_behaviours[0].id if idle_behaviours else None
 
-    def queue_behaviour(self, behaviour_id: str, priority: int = 0):
+    def queue_behaviour(self, behaviour_id: Union[BehaviourId, str], priority: int = 0):
         """Add a behaviour to the queue with the specified priority."""
         if behaviour_id not in self._available_behaviour_ids:
             app_logger.error(f"Cannot queue invalid/unavailable behaviour ID: {behaviour_id}")
@@ -265,14 +272,10 @@ class BehaviourManager:
         self.behaviour_queue.put((priority, behaviour_id))
         app_logger.info(f"Queued behaviour '{behaviour_id}' with priority {priority}")
 
-    # =========================================================================
-    # Lookups
-    # =========================================================================
-
-    def get_behaviour(self, behaviour_id: str) -> Union[BaseBehaviour, None]:
+    def get_behaviour(self, behaviour_id: Union[BehaviourId, str]) -> Union[BaseBehaviour, None]:
         return self._behaviour_prototypes.get(behaviour_id)
 
-    def get_behaviour_class(self, behaviour_id: str) -> Union[Type[BaseBehaviour], None]:
+    def get_behaviour_class(self, behaviour_id: Union[BehaviourId, str]) -> Union[Type[BaseBehaviour], None]:
         return self._behaviour_classes.get(behaviour_id)
 
     def get_current_behaviour_status(self) -> dict:

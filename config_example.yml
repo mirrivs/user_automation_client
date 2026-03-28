@@ -19,6 +19,11 @@ automation:
       external_email: "passwordplaceholder"
   idle_cycle:
     procrastination_chance: -1.0
+  behaviour_toggles:
+    attack_phishing: true
+    attack_ransomware: false
+    attack_reverse_shell: false
+    procrastination: true
   behaviours:
     procrastination:
       max_duration: 66

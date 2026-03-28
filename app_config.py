@@ -9,11 +9,13 @@ config_file = os.path.join(parent_dir, "config.yml")
 
 
 app_config: AppConfig = load_config(config_file)
-automation_config: AutomationConfig = app_config.get("automation", {})
+automation_config: AutomationConfig = cast(AutomationConfig, app_config.get("automation", {}))
+
 
 
 def save_app_config(config: Union[AppConfig, dict[str, Any]]) -> None:
     save_config(config_file, cast(dict[str, Any], config))
+
 
 
 def get_app_config() -> AppConfig:

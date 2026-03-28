@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviour.models.config import AttackRansomwareCfg
 from cleanup_manager import CleanupManager
@@ -22,7 +23,7 @@ class BehaviourAttackRansomware(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "attack_ransomware"
+    id: BehaviourId = "attack_ransomware"
     display_name = "Ransomware"
     category = BehaviourCategory.ATTACK
     description = "Ransomware attack - downloads and opens malicious email attachment"
@@ -130,3 +131,4 @@ class BehaviourAttackRansomware(BaseBehaviour):
                     pag.press("enter")
 
         app_logger.info(f"Completed {self.id} behaviour")
+

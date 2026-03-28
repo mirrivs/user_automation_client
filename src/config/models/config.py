@@ -1,5 +1,6 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
+from behaviour.ids import BehaviourId
 from lib.selenium.models import EmailClient
 
 
@@ -42,15 +43,17 @@ class WorkEmails(TypedDict):
     email_receivers: list[str]
 
 
-class BehavioursConfigs(TypedDict):
+class BehavioursConfigs(TypedDict, total=False):
     procrastination: Procrastination
     work_emails: WorkEmails
     attack_phishing: AttackPhishing
+    attack_ransomware: AttackRansomware
 
 
 class AutomationConfig(TypedDict):
     general: General
     idle_cycle: IdleCycle
+    behaviour_toggles: NotRequired[dict[BehaviourId, bool]]
     behaviours: BehavioursConfigs
 
 

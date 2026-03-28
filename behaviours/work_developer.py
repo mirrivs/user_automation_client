@@ -4,6 +4,7 @@ import random
 
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviours.consts import TEMPLATES_DIR
 from cleanup_manager import CleanupManager
@@ -20,7 +21,7 @@ class BehaviourWorkDeveloper(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "work_developer"
+    id: BehaviourId = "work_developer"
     display_name = "Developer Work"
     category = BehaviourCategory.IDLE
     description = "Simulates developer activities"
@@ -81,3 +82,4 @@ class BehaviourWorkDeveloper(BaseBehaviour):
         )
 
         app_logger.info("Completed work_developer behaviour")
+

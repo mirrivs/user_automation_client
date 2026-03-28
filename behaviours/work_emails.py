@@ -3,6 +3,7 @@ import platform
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviour.models.config import WorkEmailsCfg
 from cleanup_manager import CleanupManager
@@ -20,7 +21,7 @@ class BehaviourWorkEmails(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "work_emails"
+    id: BehaviourId = "work_emails"
     display_name = "Work Emails"
     category = BehaviourCategory.IDLE
     description = "Generates or responds to predefined email conversations"
@@ -86,3 +87,4 @@ class BehaviourWorkEmails(BaseBehaviour):
             self.pool.submit(email_client.send_email, email_receivers, email["subject"], email["email_body"]).result()
 
         app_logger.info("Completed work_emails behaviour")
+

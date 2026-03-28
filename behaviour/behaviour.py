@@ -3,6 +3,7 @@ import threading
 from typing import Callable
 
 from app_config import app_config
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
 from lib.cancellable_futures import CancellableThreadPoolExecutor, OperationCancelled, _current_executor
@@ -14,7 +15,7 @@ class BaseBehaviour(threading.Thread):
     Base class for interruptible behaviour threads with automatic cleanup support.
 
     Class attributes to override in subclasses:
-        id: str - Unique identifier for the behaviour
+        id: BehaviourId - Unique identifier for the behaviour
         display_name: str - Human-readable name
         category: BehaviourCategory - Category (IDLE or ATTACK)
         description: str - Description of what the behaviour does
@@ -26,7 +27,7 @@ class BaseBehaviour(threading.Thread):
     """
 
     # Class-level metadata - override in subclasses
-    id: str = "base"
+    id: BehaviourId
     display_name: str = "BaseBehaviour"
     category: BehaviourCategory = BehaviourCategory.IDLE
     description: str = ""
@@ -37,11 +38,6 @@ class BaseBehaviour(threading.Thread):
 
     def __init__(self, cleanup_manager: CleanupManager, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if self.id is None:
-            self.id = self.__class__.__name__
-        if self.display_name is None:
-            self.display_name = self.id
 
         self.cleanup_manager = cleanup_manager
         self._cleanup_callbacks: list[Callable] = []
@@ -112,7 +108,7 @@ class BaseBehaviour(threading.Thread):
 
         This is the primary way the BehaviourManager terminates a running
         behaviour. The flow is:
-          1. Set the shared cancel event → pool.check()/sleep() raise
+          1. Set the shared cancel event -> pool.check()/sleep() raise
              OperationCancelled in whichever task is running.
           2. join() waits for run() to finish (including cleanup).
         """

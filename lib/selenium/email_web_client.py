@@ -1,4 +1,4 @@
-from typing import List
+﻿from typing import List
 
 import jinja2
 import pyautogui as pag
@@ -7,6 +7,7 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
 )
+from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -109,6 +110,16 @@ class BaseEmailWebClient(SeleniumDriver):
 
         element.click()
 
+    def _type_receivers(self, element: WebElement, receivers: list[str]):
+        self.click_element(element)
+        sleep(0.5)
+
+        for receiver in receivers:
+            self.type_text(element, receiver)
+            self.check_cancellation()
+            element.send_keys(Keys.ENTER)
+            sleep(0.2)
+
     def email_allow_files(self):
         raise NotImplementedError()
 
@@ -191,34 +202,29 @@ class OutlookWebAccessClient(BaseEmailWebClient):
                 receiver_name = receivers[0].split(".")[0].capitalize()
             email_body = jinja2.Template(email_body).render(sender_name=self.user["name"], receiver_name=receiver_name)
 
-            self.wait().until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Write a new message')]"))
-            ).click()
+            self.click_element(
+                self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Write a new message')]")))
+            )
 
             sleep(2)
 
-            self.driver.find_element(By.XPATH, "//input[contains(@aria-label, 'To')]").click()
-            for receiver in receivers:
-                sleep(0.5)
-                pyperclip.copy(receiver)
-                pag.hotkey("ctrl", "v")
+            to_input = self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[contains(@aria-label, 'To')]")))
+            self._type_receivers(to_input, receivers)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Add a subject']"))).click()
-
-            sleep(0.5)
-            pyperclip.copy(subject)
-            pag.hotkey("ctrl", "v")
+            subject_input = self.wait().until(
+                EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Add a subject']"))
+            )
+            self.type_text(subject_input, subject, clear_first=True)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//textarea[@name='_message']"))).click()
-
-            sleep(0.5)
-            pyperclip.copy(email_body)
-            pag.hotkey("ctrl", "v")
+            body_input = self.wait().until(
+                EC.element_to_be_clickable((By.XPATH, "//div[contains(@aria-label, 'Message body')]"))
+            )
+            self.type_text(body_input, email_body, clear_first=True)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))).click()
+            self.click_element(self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))))
             sleep(1)
 
         except Exception as ex:
@@ -251,7 +257,7 @@ class OutlookWebAccessClient(BaseEmailWebClient):
             pag.hotkey("ctrl", "v")
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))).click()
+            self.click_element(self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))))
             sleep(1)
 
         except Exception as ex:
@@ -382,34 +388,25 @@ class O365Client(BaseEmailWebClient):
                 receiver_name = receivers[0].split(".")[0].capitalize()
             email_body = jinja2.Template(email_body).render(sender_name=self.user["name"], receiver_name=receiver_name)
 
-            self.wait().until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'New mail')]"))
-            ).click()
+            self.click_element(
+                self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'New mail')]")))
+            )
 
             sleep(2)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'To')]"))).click()
-            for receiver in receivers:
-                sleep(0.5)
-                pyperclip.copy(receiver)
-                pag.hotkey("ctrl", "v")
+            to_input = self.wait().until(EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'To')]")))
+            self._type_receivers(to_input, receivers)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Subject']"))).click()
-
-            sleep(0.5)
-            pyperclip.copy(subject)
-            pag.hotkey("ctrl", "v")
+            subject_input = self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Subject']")))
+            self.type_text(subject_input, subject, clear_first=True)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//div[@aria-label='Message body']"))).click()
-
-            sleep(0.5)
-            pyperclip.copy(email_body)
-            pag.hotkey("ctrl", "v")
+            body_input = self.wait().until(EC.element_to_be_clickable((By.XPATH, "//div[@aria-label='Message body']")))
+            self.type_text(body_input, email_body, clear_first=True)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send']"))).click()
+            self.click_element(self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send']"))))
             sleep(1)
 
         except Exception as ex:
@@ -446,7 +443,7 @@ class O365Client(BaseEmailWebClient):
             pag.hotkey("ctrl", "v")
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))).click()
+            self.click_element(self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))))
             sleep(1)
 
         except Exception as ex:
@@ -523,34 +520,25 @@ class RoundcubeClient(BaseEmailWebClient):
                 receiver_name = receivers[0].split(".")[0].capitalize()
             email_body = jinja2.Template(email_body).render(sender_name=self.user["name"], receiver_name=receiver_name)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//a[@title='Create a new message']"))).click()
+            self.click_element(self.wait().until(EC.element_to_be_clickable((By.XPATH, "//a[@title='Create a new message']"))))
 
             sleep(2)
 
-            self.driver.find_element(By.XPATH, "//input[contains(@aria-label, 'To')]").click()
-            for receiver in receivers:
-                sleep(0.5)
-                pyperclip.copy(receiver)
-                pag.hotkey("ctrl", "v")
+            to_input = self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[contains(@aria-label, 'To')]")))
+            self._type_receivers(to_input, receivers)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[@name='_subject']"))).click()
-
-            sleep(0.5)
-            pyperclip.copy(subject)
-            pag.hotkey("ctrl", "v")
+            subject_input = self.wait().until(EC.element_to_be_clickable((By.XPATH, "//input[@name='_subject']")))
+            self.type_text(subject_input, subject, clear_first=True)
             sleep(1)
 
-            self.wait().until(
+            body_input = self.wait().until(
                 EC.element_to_be_clickable((By.XPATH, "//div[contains(@aria-label, 'Message body')]"))
-            ).click()
-
-            sleep(0.5)
-            pyperclip.copy(email_body)
-            pag.hotkey("ctrl", "v")
+            )
+            self.type_text(body_input, email_body, clear_first=True)
             sleep(1)
 
-            self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))).click()
+            self.click_element(self.wait().until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@title, 'Send')]"))))
             sleep(1)
 
         except Exception as ex:
@@ -613,3 +601,4 @@ def getEmailClient(
         raise NoSuchElementException(f"Email client could not be found for: {email_client}")
 
     return email_client_mapping[email_client]
+

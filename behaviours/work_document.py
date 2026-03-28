@@ -5,6 +5,7 @@ from app_config import automation_config
 from behaviour import get_image_path
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
 from lib.autogui.actions import os_utils
@@ -22,7 +23,7 @@ class BehaviourWorkDocument(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "work_document"
+    id: BehaviourId = "work_document"
     display_name = "Work Document"
     category = BehaviourCategory.IDLE
     description = "Simulates work with text document"
@@ -103,3 +104,4 @@ class BehaviourWorkDocument(BaseBehaviour):
                 grayscale=True,
             ).result()
             app_logger.info("LibreOffice Writer opened successfully")
+

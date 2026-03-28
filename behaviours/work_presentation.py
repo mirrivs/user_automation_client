@@ -4,6 +4,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
 from lib.autogui.actions.browser import Edge, Firefox
@@ -20,7 +21,7 @@ class BehaviourWorkPresentation(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "work_presentation"
+    id: BehaviourId = "work_presentation"
     display_name = "Work Presentation"
     category = BehaviourCategory.IDLE
     description = "Simulates work on Presentation"
@@ -88,3 +89,4 @@ class BehaviourWorkPresentation(BaseBehaviour):
     def local_behaviour(self):
         self.cleanup_manager.add_cleanup_task(lambda: office_utils.close_app("powerpoint"))
         self.pool.submit(office_utils.start_app, "powerpoint").result()
+

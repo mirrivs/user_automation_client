@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from app_config import app_config, automation_config
 from behaviour.behaviour import BaseBehaviour
 from behaviour.config import get_behaviour_cfg
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviour.models.config import AttackPhishingCfg
 from cleanup_manager import CleanupManager
@@ -22,7 +23,7 @@ class BehaviourAttackPhishing(BaseBehaviour):
     """
 
     # Class-level metadata
-    id = "attack_phishing"
+    id: BehaviourId = "attack_phishing"
     display_name = "Phishing"
     category = BehaviourCategory.ATTACK
     description = "Attack phishing behaviour - opens phishing website from email"
@@ -120,3 +121,4 @@ class BehaviourAttackPhishing(BaseBehaviour):
             raise RuntimeError("No phishing link found")
 
         app_logger.info(f"Completed {self.id} behaviour")
+

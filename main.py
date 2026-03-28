@@ -9,8 +9,8 @@ import sys
 if __name__ == "__main__":
     multiprocessing.freeze_support()
 
-# Custom imports
 from app_config import app_config
+from behaviour.registry import validate_behaviour_registry
 from src.gui.system_tray import SystemTrayApp
 from user_automation_manager import UserAutomationManager
 
@@ -23,8 +23,9 @@ config_file = os.path.join(parent_dir, "config.yml")
 
 
 def main():
-    user_automation_manager = UserAutomationManager(app_config)
+    validate_behaviour_registry()
 
+    user_automation_manager = UserAutomationManager(app_config)
     tray_app = SystemTrayApp(user_automation_manager)
 
     user_automation_manager.start()

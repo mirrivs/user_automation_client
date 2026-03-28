@@ -1,5 +1,6 @@
 from app_config import automation_config
 from behaviour.behaviour import BaseBehaviour
+from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
 from lib.autogui.actions.browser import Edge, Firefox
@@ -10,7 +11,7 @@ from src.logger import app_logger
 
 
 class BehaviourWorkOrganizationWeb(BaseBehaviour):
-    id = "work_organization_web"
+    id: BehaviourId = "work_organization_web"
     display_name = "Organization Web"
     category = BehaviourCategory.IDLE
     description = "Simulates browsing organization website"
@@ -50,3 +51,4 @@ class BehaviourWorkOrganizationWeb(BaseBehaviour):
         self.pool.submit(self.selenium_controller.browse_organization_website, 45).result()
 
         app_logger.info(f"Completed {self.id} behaviour")
+
