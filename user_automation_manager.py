@@ -1,4 +1,4 @@
-import json
+﻿import json
 import logging
 import socket
 import threading
@@ -10,6 +10,7 @@ import requests
 import websocket
 
 from app_config import AppConfig, app_config, automation_config, save_app_config
+from behaviour.ids import BehaviourId
 from behaviour.registry import BEHAVIOURS
 from behaviour_manager import BehaviourManager
 from json_encoder import EnumEncoder
@@ -30,10 +31,7 @@ class UserAutomationManager:
     """
 
     def __init__(self, config: AppConfig):
-        # Use a single configuration source
         self.config: AppConfig = config
-
-        # BehaviourManager automatically discovers available behaviours
         self.behaviour_manager = BehaviourManager(BEHAVIOURS, self.config)
 
         self.behaviour_cycle_thread = threading.Thread(
@@ -46,8 +44,6 @@ class UserAutomationManager:
         )
 
         self.idle_cycle_status = IdleCycleStatus.RUNNING
-
-        # Server connection attributes
         self.access_token: Optional[str] = None
         self.websocket_connection: Optional[websocket.WebSocket] = None
         self.is_connected = False
@@ -56,7 +52,6 @@ class UserAutomationManager:
         self.idle_cycle_status = status
 
     def _authenticate_with_server(self) -> bool:
-        """Authenticate with the server and get access token"""
         try:
             username = automation_config["general"]["user"]["internal_email"]
             password = automation_config["general"]["user"]["internal_password"]
@@ -108,7 +103,6 @@ class UserAutomationManager:
             return False
 
     def _connect_websocket(self) -> bool:
-        """Establish WebSocket connection for real-time updates"""
         try:
             ws_url = app_config["app"]["user_automation_server_websocket"] + "/client/client_socket"
 
@@ -126,7 +120,6 @@ class UserAutomationManager:
             return False
 
     def _handle_websocket_message(self, message: str):
-        """Handle incoming WebSocket messages"""
         try:
             data = json.loads(message)
             action = data.get("action")
@@ -157,22 +150,23 @@ class UserAutomationManager:
             logger.error(f"Error handling WebSocket message: {e}")
 
     def run_behaviour(self, behaviour_id: str, force: bool = False):
-        """Run a specific behaviour"""
         self.behaviour_manager.run_behaviour(behaviour_id, force)
         logger.info(f"Running behaviour: {behaviour_id}")
+
+    def _save_and_refresh_config(self) -> None:
+        self.behaviour_manager.refresh_availability(self.config)
+        save_app_config(self.config)
 
     def _merge_config(self, new_config: dict[str, Any]):
         try:
             self._deep_merge_dict(cast(dict[str, Any], self.config), new_config)
-            self.behaviour_manager.refresh_availability(self.config)
-            save_app_config(self.config)
+            self._save_and_refresh_config()
             logger.info(f"Configuration updated and saved: {list(new_config.keys())}")
         except Exception as e:
             logger.error(f"Error merging config: {e}")
             raise e
 
     def _deep_merge_dict(self, target: MutableMapping[str, Any], source: MutableMapping[str, Any]):
-        """Deep merge source dictionary into target dictionary"""
         for key, value in source.items():
             if key in target and isinstance(target[key], dict) and isinstance(value, dict):
                 self._deep_merge_dict(target[key], value)
@@ -180,7 +174,6 @@ class UserAutomationManager:
                 target[key] = value
 
     def _update_behaviour_config(self, behaviour_id: str, behaviour_config: dict):
-        """Update configuration for a specific behaviour and save to file"""
         try:
             if "automation" not in self.config:
                 self.config["automation"] = {}
@@ -190,18 +183,30 @@ class UserAutomationManager:
                 self.config["automation"]["behaviours"][behaviour_id] = {}
 
             self.config["automation"]["behaviours"][behaviour_id] = behaviour_config
-
-            self.behaviour_manager.refresh_availability(self.config)
-            save_app_config(self.config)
-
+            self._save_and_refresh_config()
             logger.info(f"Behaviour configuration updated and saved for {behaviour_id}")
 
         except Exception as e:
             logger.error(f"Error updating behaviour config for {behaviour_id}: {e}")
             raise e
 
+    def update_behaviour_toggle(self, behaviour_id: BehaviourId, enabled: bool) -> None:
+        try:
+            automation = self.config.setdefault("automation", {})
+            toggles = automation.setdefault("behaviour_toggles", {})
+            toggles[behaviour_id] = enabled
+            self._save_and_refresh_config()
+            logger.info(f"Behaviour toggle updated: {behaviour_id}={enabled}")
+        except Exception as e:
+            logger.error(f"Error updating behaviour toggle for {behaviour_id}: {e}")
+            raise e
+
+    def get_behaviour_toggles(self) -> dict[BehaviourId, bool]:
+        automation = self.config.get("automation", {})
+        toggles = automation.get("behaviour_toggles", {})
+        return cast(dict[BehaviourId, bool], toggles.copy())
+
     def _send_status_update(self):
-        """Send status update to server via WebSocket"""
         try:
             if not self.websocket_connection:
                 return
@@ -229,10 +234,8 @@ class UserAutomationManager:
             logger.error(f"Error sending status update: {e}")
 
     def _run_server_connection(self):
-        """Main server connection loop"""
         default_reconnect_delay = app_config["app"]["server_reconnect_delay"]
         max_reconnect_delay = app_config["app"]["server_max_reconnect_delay"]
-
         reconnect_delay = default_reconnect_delay
 
         while True:
@@ -286,7 +289,6 @@ class UserAutomationManager:
                 time.sleep(reconnect_delay)
 
     def _run_behaviour_cycle(self):
-        """Main behaviour execution cycle"""
         old_config = self.config.copy()
 
         while True:
@@ -310,13 +312,11 @@ class UserAutomationManager:
                 time.sleep(5)
 
     def start(self):
-        """Start both behaviour cycle and server connection threads"""
         logger.info("Starting User Automation Manager")
         self.behaviour_cycle_thread.start()
         self.server_connection_thread.start()
 
     def stop(self):
-        """Stop the manager and close connections"""
         logger.info("Stopping User Automation Manager")
         self.idle_cycle_status = IdleCycleStatus.STOPPED
 
@@ -329,16 +329,13 @@ class UserAutomationManager:
         self.is_connected = False
 
     def get_config(self):
-        """Get the current configuration"""
         return self.config.copy()
 
     def get_behaviour_config(self, behaviour_id: str):
-        """Get configuration for a specific behaviour"""
         try:
             return self.config.get("automation", {}).get("behaviours", {}).get(behaviour_id, {}).copy()
         except Exception:
             return {}
 
     def is_server_connected(self):
-        """Check if connected to server"""
         return self.is_connected

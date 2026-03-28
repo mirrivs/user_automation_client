@@ -1,11 +1,10 @@
-import platform
+﻿import platform
 import threading
-from typing import Callable
 
 from app_config import app_config
 from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
-from cleanup_manager import CleanupManager
+from cleanup_manager import CleanupManager, CleanupTask
 from lib.cancellable_futures import CancellableThreadPoolExecutor, OperationCancelled, _current_executor
 from src.logger import app_logger
 
@@ -26,13 +25,11 @@ class BaseBehaviour(threading.Thread):
         cleanup() - Cleanup logic (call super().cleanup() at end)
     """
 
-    # Class-level metadata - override in subclasses
     id: BehaviourId
     display_name: str = "BaseBehaviour"
     category: BehaviourCategory = BehaviourCategory.IDLE
     description: str = ""
 
-    # Store system info
     os_type: str = platform.system()
     landscape_id = app_config["app"]["landscape_id"]
 
@@ -40,11 +37,7 @@ class BaseBehaviour(threading.Thread):
         super().__init__(*args, **kwargs)
 
         self.cleanup_manager = cleanup_manager
-        self._cleanup_callbacks: list[Callable] = []
 
-        # Cooperative cancellation: one event shared between the behaviour
-        # thread and every pool task. Setting it triggers OperationCancelled
-        # in any call to check() or sleep().
         self._cancel_event = threading.Event()
         self.pool = CancellableThreadPoolExecutor(max_workers=1)
         self.pool._global_event = self._cancel_event
@@ -55,16 +48,12 @@ class BaseBehaviour(threading.Thread):
 
     @property
     def cancel_requested(self) -> bool:
-        """True if this behaviour has been asked to stop."""
         return self._cancel_event.is_set()
 
     def request_cancel(self) -> None:
-        """Signal the behaviour and all its pool tasks to stop cooperatively."""
         self._cancel_event.set()
 
     def run(self):
-        """Main thread execution - runs behaviour, cleans up."""
-        # Bind the pool to this thread so module-level sleep()/check() work
         _current_executor.set(self.pool)
         try:
             self.run_behaviour()
@@ -83,12 +72,6 @@ class BaseBehaviour(threading.Thread):
     def cleanup(self):
         app_logger.info(f"Running cleanup for {self.__class__.__name__}")
 
-        for callback in reversed(self._cleanup_callbacks):
-            try:
-                callback()
-            except Exception as e:
-                app_logger.error(f"Error in cleanup callback: {e}")
-
         try:
             self.pool.shutdown(wait=True)
         except Exception as e:
@@ -100,18 +83,10 @@ class BaseBehaviour(threading.Thread):
             except Exception as e:
                 app_logger.error(f"Error in cleanup manager: {e}")
 
-    def register_cleanup(self, callback: Callable):
-        self._cleanup_callbacks.append(callback)
+    def register_cleanup(self, callback, *args, label: str | None = None, **kwargs) -> CleanupTask:
+        return self.cleanup_manager.add_cleanup_task(callback, *args, label=label, **kwargs)
 
     def stop(self, timeout: float = 10):
-        """Request cancellation and wait for the behaviour thread to finish.
-
-        This is the primary way the BehaviourManager terminates a running
-        behaviour. The flow is:
-          1. Set the shared cancel event -> pool.check()/sleep() raise
-             OperationCancelled in whichever task is running.
-          2. join() waits for run() to finish (including cleanup).
-        """
         app_logger.info(f"Stopping {self.__class__.__name__}...")
         self.request_cancel()
         self.join(timeout=timeout)

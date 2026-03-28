@@ -20,38 +20,32 @@ class SystemTrayApp:
 
         self.user_automation_manager = user_automation_manager
         self.behaviour_manager = user_automation_manager.behaviour_manager
-
         self.popup = PopupWindow(self.user_automation_manager, self.toggle_idle_cycle)
 
         try:
             stylesheet_path = resource_path("static/styles.qss")
             app_logger.debug(f"Loading stylesheet from: {stylesheet_path}")
             with open(stylesheet_path, "r") as f:
-                styles = f.read()
-                self.app.setStyleSheet(styles)
+                self.app.setStyleSheet(f.read())
         except Exception as e:
             app_logger.error(f"Error loading stylesheet: {str(e)}")
 
-        # Log platform and environment info
         app_logger.debug(f"Platform: {platform.system()}")
         app_logger.debug(f"Desktop environment: {os.environ.get('XDG_CURRENT_DESKTOP', 'Unknown')}")
         app_logger.debug(f"Session type: {os.environ.get('XDG_SESSION_TYPE', 'Unknown')}")
         app_logger.debug(f"Wayland display: {os.environ.get('WAYLAND_DISPLAY', 'Not set')}")
 
-        # Initialize Qt system tray icon
         self.tray = None
+        self.tray_menu = None
+        self.status_action = None
         self.init_retry_count = 0
-        app_logger.debug("Using QSystemTrayIcon for system tray")
         self.init_system_tray()
 
-        # Status timer
         self.status_timer = QTimer()
         self.status_timer.timeout.connect(self.update_status)
         self.status_timer.start(1000)
 
     def init_system_tray(self):
-        """Initialize Qt system tray with retry logic"""
-
         app_logger.debug(f"Attempting Qt tray init (attempt #{self.init_retry_count + 1})")
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -64,18 +58,12 @@ class SystemTrayApp:
                 self.popup.show()
             return
 
-        app_logger.debug("Qt system tray is available!")
-
-        # Load icon - try multiple sizes for best display
         icon = QIcon()
-
-        # Add multiple icon sizes for different DPI/scaling scenarios
         for size in [16, 22, 24, 32, 48, 64]:
             icon_path = resource_path(os.path.join("static", "logos", f"user_automation_logo_{size}.png"))
             if os.path.exists(icon_path):
                 icon.addFile(icon_path, QSize(size, size))
-                app_logger.debug(f"Added icon size: {size}x{size}")
-            elif size == 32:  # Fallback to the one we know exists
+            elif size == 32:
                 icon_path_32 = resource_path(os.path.join("static", "logos", "user_automation_logo_32.png"))
                 if os.path.exists(icon_path_32):
                     pixmap = QPixmap(icon_path_32)
@@ -86,82 +74,53 @@ class SystemTrayApp:
                         Qt.TransformationMode.SmoothTransformation,
                     )
                     icon.addPixmap(scaled_pixmap)
-                    app_logger.info(f"Added scaled icon from 32x32 to {size}x{size}")
 
         if icon.isNull():
-            app_logger.warning("Failed to load custom icon, using fallback")
             icon = self.app.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
 
         try:
             self.tray = QSystemTrayIcon(self.app)
             self.tray.setIcon(icon)
-
-            # Set tooltip based on platform
-            is_ubuntu = "ubuntu" in platform.platform().lower()
-            if is_ubuntu:
-                self.tray.setToolTip("User Automation Client - Right-click for menu")
-            else:
-                self.tray.setToolTip("User Automation Client - Click to show/hide")
-
-            # Connect activated signal for clicks - handle ALL click types
+            self.tray.setToolTip("User Automation Client")
             self.tray.activated.connect(self.on_tray_activated)
 
-            # Create context menu - required for Ubuntu/AppIndicator to work properly
-            # Note: On Ubuntu/GNOME, left-clicks don't work with QSystemTrayIcon
-            # Users must use the context menu to interact with the app
-            menu = QMenu()
+            self.tray_menu = QMenu()
+            self.status_action = self.tray_menu.addAction("Status: Ready")
+            self.status_action.setEnabled(False)
+            self.tray_menu.addSeparator()
 
-            # Make Show/Hide the first and most prominent action
-            show_hide_action = menu.addAction("Show/Hide Window")
-            show_hide_action.triggered.connect(self.toggle_popup)
-            # Set as default action (bold text) - triggered on double-click where supported
-            menu.setDefaultAction(show_hide_action)
+            open_action = self.tray_menu.addAction("Open Dashboard")
+            open_action.triggered.connect(self.toggle_popup)
 
-            menu.addSeparator()
-            quit_action = menu.addAction("Quit")
+            settings_action = self.tray_menu.addAction("Settings")
+            settings_action.triggered.connect(self.show_settings)
+
+            pause_action = self.tray_menu.addAction("Pause/Resume Idle Cycle")
+            pause_action.triggered.connect(self.toggle_idle_cycle)
+
+            stop_action = self.tray_menu.addAction("Stop Current Behaviour")
+            stop_action.triggered.connect(self.popup.stop_behaviour)
+
+            self.tray_menu.addSeparator()
+            quit_action = self.tray_menu.addAction("Quit")
             quit_action.triggered.connect(self.quit_app)
 
-            self.tray.setContextMenu(menu)
-
+            self.tray.setContextMenu(self.tray_menu)
             self.tray.show()
-
-            app_logger.debug(f"Qt tray icon created. Visible: {self.tray.isVisible()}")
-            if is_ubuntu:
-                app_logger.warning(
-                    "Ubuntu detected: Left-click on tray icon may not work due to "
-                    "AppIndicator limitations. Use right-click menu instead."
-                )
-            else:
-                app_logger.debug("Tray icon with context menu - left-click should toggle popup")
+            self.update_status()
 
         except Exception as e:
             app_logger.error(f"Error creating Qt system tray icon: {str(e)}")
             self.popup.show()
 
     def on_tray_activated(self, reason):
-        """Handle Qt system tray activation - toggle popup on left/middle/double click"""
-        app_logger.debug(f"Qt tray activated with reason: {reason} ({reason.name})")
-
         try:
-            # Toggle popup on left-click, middle-click, and double-click
-            # Right-click (Context) will show the menu automatically
-            if reason == QSystemTrayIcon.ActivationReason.Trigger:
-                app_logger.debug("Left-click detected - toggling popup")
+            if reason in {
+                QSystemTrayIcon.ActivationReason.Trigger,
+                QSystemTrayIcon.ActivationReason.MiddleClick,
+                QSystemTrayIcon.ActivationReason.DoubleClick,
+            }:
                 self.toggle_popup()
-            elif reason == QSystemTrayIcon.ActivationReason.MiddleClick:
-                app_logger.debug("Middle-click detected - toggling popup")
-                self.toggle_popup()
-            elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
-                app_logger.debug("Double-click detected - toggling popup")
-                self.toggle_popup()
-            elif reason == QSystemTrayIcon.ActivationReason.Context:
-                # Right-click shows context menu - don't toggle popup
-                app_logger.debug("Right-click detected - showing context menu")
-            else:
-                # Unknown reason - toggle popup
-                app_logger.debug("Unknown activation reason - toggling popup")
-                self.toggle_popup()
-
         except Exception as e:
             app_logger.error(f"Error handling tray icon click: {str(e)}")
 
@@ -175,27 +134,45 @@ class SystemTrayApp:
                 self.user_automation_manager.set_idle_cycle_status(IdleCycleStatus.PAUSED)
                 if self.popup.isVisible():
                     self.popup.update_idle_cycle_button(True)
-
+            self.update_status()
         except Exception as e:
             app_logger.error(f"Error toggling idle cycle: {str(e)}")
 
     def update_status(self):
         try:
-            # Update popup status if visible
             if self.popup.isVisible():
+                self.popup.refresh_ui()
                 self.popup.update_status()
+
+            if self.status_action:
+                current = self.behaviour_manager.current_behaviour
+                if current is not None:
+                    status = f"Running: {current.display_name}"
+                else:
+                    status = f"Idle Cycle: {self.user_automation_manager.idle_cycle_status.value.title()}"
+                self.status_action.setText(f"Status: {status}")
 
         except Exception as e:
             app_logger.error(f"Error updating status: {str(e)}")
 
+    def show_settings(self):
+        try:
+            self.popup.refresh_ui()
+            self.popup.show_settings()
+            self.popup.position_for_os()
+            self.popup.show()
+            self.popup.raise_()
+            self.popup.activateWindow()
+        except Exception as e:
+            app_logger.error(f"Error opening settings: {str(e)}")
+
     def toggle_popup(self):
         try:
             if self.popup.isVisible():
-                app_logger.info("Hiding popup window")
                 self.popup.hide()
             else:
-                app_logger.info("Showing popup window")
-                self.popup.update_status()
+                self.popup.refresh_ui()
+                self.popup.show_behaviours()
                 self.popup.update_idle_cycle_button(
                     self.user_automation_manager.idle_cycle_status == IdleCycleStatus.PAUSED
                 )
@@ -209,14 +186,10 @@ class SystemTrayApp:
     def quit_app(self):
         try:
             app_logger.info("Quitting application...")
-
             if self.behaviour_manager.is_behaviour_running():
                 self.behaviour_manager.terminate_behaviour()
-
-            # Hide tray icon before quitting
             if self.tray:
                 self.tray.hide()
-
             self.app.quit()
         except Exception as e:
             app_logger.error(f"Error quitting app: {str(e)}")

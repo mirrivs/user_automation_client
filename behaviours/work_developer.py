@@ -1,4 +1,4 @@
-import os
+﻿import os
 import platform
 import random
 
@@ -20,7 +20,6 @@ class BehaviourWorkDeveloper(BaseBehaviour):
     Behaviour for simulating developer work by writing and running code.
     """
 
-    # Class-level metadata
     id: BehaviourId = "work_developer"
     display_name = "Developer Work"
     category = BehaviourCategory.IDLE
@@ -46,7 +45,7 @@ class BehaviourWorkDeveloper(BaseBehaviour):
         app_logger.info("Starting work_developer behaviour")
 
         self.pool.submit(os_utils.open_terminal).result()
-        self.cleanup_manager.add_cleanup_task(os_utils.close_terminal)
+        terminal_cleanup = self.cleanup_manager.add_cleanup_task(os_utils.close_terminal, label="close_terminal")
 
         self.pool.sleep(2)
 
@@ -61,8 +60,11 @@ class BehaviourWorkDeveloper(BaseBehaviour):
                 file_content = file.read()
 
         self.pool.submit(os_utils.write_file, self.filename, file_content).result()
-
-        self.cleanup_manager.add_cleanup_task(os_utils.delete_file, self.filename)
+        file_cleanup = self.cleanup_manager.add_cleanup_task(
+            os_utils.delete_file,
+            self.filename,
+            label="delete_temp_file",
+        )
 
         self.pool.sleep(1)
 
@@ -73,13 +75,7 @@ class BehaviourWorkDeveloper(BaseBehaviour):
 
         self.pool.sleep(4)
 
-        file_cleanup_task = self.cleanup_manager.pop_cleanup_task()
-        file_cleanup_task["function"](*file_cleanup_task.get("args", ()), **file_cleanup_task.get("kwargs", {}))
-
-        terminal_cleanup_task = self.cleanup_manager.pop_cleanup_task()
-        terminal_cleanup_task["function"](
-            *terminal_cleanup_task.get("args", ()), **terminal_cleanup_task.get("kwargs", {})
-        )
+        self.cleanup_manager.run_task(file_cleanup)
+        self.cleanup_manager.run_task(terminal_cleanup)
 
         app_logger.info("Completed work_developer behaviour")
-

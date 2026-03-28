@@ -1,198 +1,240 @@
-/* :root {
-	--color-primary: #31715a;
-	--color-secondary: #00312c;
-	--color-accent: #3da072;
-	--color-accent-strong: #74fa9d;
-	--color-neutral: #fefeff;
-	--color-light-black: #000101;
-	--color-background: #fffefe;
-	--color-background-dark: #e7eaf0;
-	--color-background-darker: #0d0d0d;
-	--color-success: #69fa60;
-	--color-warning: #fad23b;
-	--color-error: #da1b2b;
-	--color-team-blue: #211df5;
-	--color-team-red: #da1b2b;
-} */
+QWidget {
+  color: #222222;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 12px;
+  background: transparent;
+}
 
 .main-frame {
-  background-color: white;
-  border-radius: 15px;
-  border: 1px solid #cccccc;
+  background-color: #f7f7f7;
+  border: 1px solid #cfcfcf;
+  border-radius: 14px;
 }
 
 .navbar {
-  margin-bottom: 6px;
-  margin-top: -2px;
+  margin-bottom: 2px;
+}
+
+.navbar,
+.title,
+.muted-label,
+.metric-label,
+.hero-value,
+.section-title,
+.settings-title,
+.status-label,
+.status-label-running,
+.status-label-warning,
+.current-behaviour-label,
+.current-behaviour-label-running {
+  background: transparent;
 }
 
 .title {
-  font-size: 14px; 
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.muted-label {
+  font-size: 11px;
+  color: #666666;
+}
+
+.hero-card,
+.settings-row {
+  background-color: #ffffff;
+  border: 1px solid #d7d7d7;
+  border-radius: 10px;
+}
+
+.hero-card {
+  padding: 0px;
+}
+
+.hero-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2d2d2d;
+}
+
+.metric-label {
+  color: #7a7a7a;
+  font-size: 10px;
   font-weight: 600;
 }
 
-.subtitle {
-  font-size: 12px; 
-  margin-top: 2px;
+.section-title,
+.settings-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2a2a2a;
 }
 
-.btn-transparent {
-  background-color: transparent;
-  border-radius: 4px;
-  border: none;
-  padding: 2px;
-  width: fit;
-}
-
-.btn-transparent:hover {
-  background-color: rgba(224, 224, 224, 0.5);
-}
-
-/* Category Labels */
-.category-label {
-  font-weight: bold;
-  font-size: 13px;
-  color: #333;
-  margin: 8px 0 4px 0;
-  padding: 6px 8px;
-  background-color: #e8e8e8;
-  border-radius: 4px;
-}
-
-/* Section Labels */
-.section-label {
-  font-weight: bold;
-  font-size: 13px;
-  color: #333;
-  margin: 8px 0 4px 0;
-  padding: 6px 8px;
-  background-color: #e8e8e8;
-  border-radius: 4px;
-}
-
-/* Behaviour Buttons */
-.behaviour-button {
-  background-color: #f8f8f8;
+.icon-button {
+  background-color: #ffffff;
   border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  padding: 6px 12px;
+  border-radius: 7px;
+  padding: 4px;
+}
+
+.icon-button:hover {
+  background-color: #f1f1f1;
+}
+
+QPushButton {
+  background-color: #ffffff;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  color: #222222;
+  padding: 6px 9px;
+}
+
+QPushButton:hover {
+  background-color: #f0f0f0;
+}
+
+QPushButton[class="behaviour-tile"] {
+  background-color: #ffffff;
+  border: 1px solid #d2d2d2;
+  border-radius: 10px;
+  color: #222222;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3em;
+  padding: 10px;
   text-align: left;
-  font-size: 12px;
-  color: #333;
-  min-height: 35px;
 }
 
-.behaviour-button:hover {
-  background-color: #e8e8e8;
-  border-color: #b0b0b0;
+QPushButton[class="behaviour-tile"]:hover {
+  background-color: #f2f2f2;
 }
 
-.behaviour-button:pressed {
-  background-color: #d8d8d8;
+QPushButton[class="behaviour-tile"]:pressed {
+  background-color: #e7e7e7;
 }
 
-/* Settings Button - Normal State */
-.settings-button {
-  background-color: #f8f8f8;
-  border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 12px;
-  color: #333;
-  min-height: 35px;
+QPushButton[class="primary-button"] {
+  background-color: #e9f2ff;
+  border: 1px solid #b9d0f3;
+  color: #1c4f8a;
+  font-weight: 600;
 }
 
-.settings-button:hover {
-  background-color: #e8e8e8;
+QPushButton[class="primary-button"]:hover {
+  background-color: #dbeaff;
 }
 
-/* Settings Button - Paused State */
-.settings-button-paused {
-  background-color: #90ee90;
-  border: 1px solid #70cc70;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 12px;
-  color: #333;
-  min-height: 35px;
+QPushButton[class="success-button"] {
+  background-color: #e7f6e7;
+  border: 1px solid #b9dfb9;
+  color: #27632a;
+  font-weight: 600;
 }
 
-.settings-button-paused:hover {
-  background-color: #70cc70;
+QPushButton[class="success-button"]:hover {
+  background-color: #daf0da;
 }
 
-/* Stop Button */
-.stop-button {
-  background-color: #f08080;
-  border: 1px solid #ff6060;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 11px;
+QPushButton[class="danger-button"] {
+  background-color: #fbe9e9;
+  border: 1px solid #e3bcbc;
+  color: #8b2c2c;
+  font-weight: 600;
 }
 
-.stop-button:hover {
-  background-color: #ff6060;
+QPushButton[class="danger-button"]:hover {
+  background-color: #f5dede;
 }
 
-/* Status Labels */
 .status-label {
-  font-size: 11px;
-  color: #666;
-  margin-top: 10px;
+  color: #666666;
 }
 
-.status-label-running {
-  font-size: 11px;
-  color: #008800;
-  margin-top: 10px;
+.status-label-running,
+.current-behaviour-label-running {
+  color: #2d6f3a;
+  font-weight: 600;
 }
 
-.status-label-error {
-  font-size: 11px;
-  color: #ff5500;
-  margin-top: 10px;
+.status-label-warning {
+  color: #9a6500;
+  font-weight: 600;
 }
 
 .current-behaviour-label {
-  font-size: 11px;
-  color: #666;
+  color: #666666;
 }
 
-.current-behaviour-label-running {
-  font-size: 11px;
-  color: #008800;
-}
-
-/* Placeholder Text */
 .placeholder-text {
-  color: #666;
-  font-style: italic;
+  background-color: #ffffff;
+  border: 1px dashed #cfcfcf;
+  border-radius: 10px;
+  color: #6c6c6c;
   font-size: 11px;
-  margin: 20px 0;
-  padding: 10px;
-  border: 1px dashed #ccc;
-  border-radius: 4px;
+  font-style: italic;
+  margin: 12px 0;
+  padding: 14px;
 }
 
-/* Scroll Areas */
-QScrollArea {
+QScrollArea,
+QScrollArea > QWidget,
+QScrollArea > QWidget > QWidget,
+QTabWidget::pane {
   border: none;
-  background-color: transparent;
+  background: transparent;
 }
 
 QScrollBar:vertical {
+  background: #ececec;
   border: none;
-  background: #f0f0f0;
-  width: 8px;
   border-radius: 4px;
+  width: 8px;
 }
 
 QScrollBar::handle:vertical {
-  background: #c0c0c0;
+  background: #c3c3c3;
   border-radius: 4px;
   min-height: 20px;
 }
 
 QScrollBar::handle:vertical:hover {
-  background: #a0a0a0;
+  background: #aaaaaa;
+}
+
+QTabBar::tab {
+  background-color: #ececec;
+  border: 1px solid #d2d2d2;
+  border-bottom: none;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  color: #555555;
+  margin-right: 3px;
+  padding: 5px 9px;
+}
+
+QTabBar::tab:selected {
+  background-color: #ffffff;
+  color: #222222;
+  font-weight: 600;
+}
+
+QCheckBox {
+  background: transparent;
+  color: #2a2a2a;
+  font-weight: 600;
+  spacing: 8px;
+}
+
+QCheckBox::indicator {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #b7b7b7;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+QCheckBox::indicator:checked {
+  background: #4d89d8;
+  border: 1px solid #4d89d8;
 }
