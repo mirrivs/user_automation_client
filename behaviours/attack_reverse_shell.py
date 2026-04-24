@@ -2,23 +2,18 @@ import pyautogui as pag
 from selenium.webdriver.common.by import By
 
 from app_config import automation_config
-from behaviour.behaviour import BaseBehaviour
+from behaviour.behaviour import WebEmailBehaviour
 from behaviour.config import get_behaviour_cfg
 from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviour.models.config import AttackReverseShellCfg
 from cleanup_manager import CleanupManager
-from lib.autogui.actions.browser import Edge, Firefox
 from lib.autogui.actions.win_utils import win_utils
 from lib.selenium.models import EmailClient
-from lib.selenium.selenium_controller import (
-    EmailClientUser,
-    getSeleniumController,
-)
 from src.logger import app_logger
 
 
-class BehaviourAttackReverseShell(BaseBehaviour):
+class BehaviourAttackReverseShell(WebEmailBehaviour):
     """
     Behaviour for downloading and opening malicious reverse shell attachment from email.
     """
@@ -43,26 +38,13 @@ class BehaviourAttackReverseShell(BaseBehaviour):
     def run_behaviour(self):
         app_logger.info(f"Starting {self.id} behaviour")
 
-        browser = Firefox() if self.os_type == "Linux" else Edge()
-
         self.email_client_type = EmailClient(automation_config["general"]["email_client"])
 
-        is_o365 = self.email_client_type == EmailClient.O365
-        email_client_user: EmailClientUser = {
-            "name": (self.user["external_email"] if is_o365 else self.user["internal_email"]).split(".")[0],
-            "email": self.user["external_email"] if is_o365 else self.user["internal_email"],
-            "password": self.user["external_password"] if is_o365 else self.user["internal_password"],
-        }
+        self.setup_web_email_behaviour(self.user, self.email_client_type)
 
-        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-
-        self.cleanup_manager.selenium_controller = self.selenium_controller
-        self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
-
-        self.selenium_controller.maximize_driver_window()
-        self.pool.sleep(4)
-
-        self.pool.submit(browser.search_by_url, automation_config["general"]["organization_mail_server_url"]).result()
+        self.pool.submit(
+            self.browser.search_by_url, automation_config["general"]["organization_mail_server_url"]
+        ).result()
         self.pool.sleep(4)
 
         self.pool.submit(self.selenium_controller.email_client.login).result()
@@ -126,4 +108,3 @@ class BehaviourAttackReverseShell(BaseBehaviour):
                 pag.press("enter")
 
         app_logger.info("Completed attack_reverse_shell behaviour")
-

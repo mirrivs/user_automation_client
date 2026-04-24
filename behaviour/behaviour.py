@@ -1,11 +1,16 @@
 ﻿import platform
 import threading
+from typing import Mapping
 
 from app_config import app_config
 from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager, CleanupTask
+from lib.autogui.actions.browser import Browser, Edge, Firefox
 from lib.cancellable_futures import CancellableThreadPoolExecutor, OperationCancelled, _current_executor
+from lib.selenium.email_web_client import BaseEmailWebClient
+from lib.selenium.models import EmailClient, EmailClientUser, build_email_client_user
+from lib.selenium.selenium_controller import SeleniumController, getSeleniumController
 from src.logger import app_logger
 
 
@@ -97,3 +102,51 @@ class BaseBehaviour(threading.Thread):
     def __repr__(self):
         available = self.is_available()
         return f"<{self.__class__.__name__}(id='{self.id}', available={available})>"
+
+
+class WebBehaviour(BaseBehaviour):
+    """Base behaviour with shared web browser + selenium setup."""
+
+    browser: Browser
+    selenium_controller: SeleniumController
+
+    def get_browser_client(self) -> Browser:
+        return Firefox() if self.os_type == "Linux" else Edge()
+
+    def setup_web_behaviour(self) -> Browser:
+        self.browser = self.get_browser_client()
+        return self.browser
+
+    def setup_selenium(self, email_client_type: EmailClient, user: EmailClientUser, startup_sleep: float = 4) -> None:
+        self.setup_web_behaviour()
+        self.selenium_controller = getSeleniumController(email_client_type, user)
+
+        self.cleanup_manager.selenium_controller = self.selenium_controller
+        self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
+
+        self.selenium_controller.maximize_driver_window()
+        self.pool.sleep(startup_sleep)
+
+
+class WebEmailBehaviour(WebBehaviour):
+    """Base behaviour with shared web + email client initialization."""
+
+    email_client: BaseEmailWebClient
+    email_client_type: EmailClient
+    email_client_user: EmailClientUser
+
+    def setup_web_email_behaviour(
+        self,
+        user: Mapping[str, str],
+        email_client_type: EmailClient,
+        force_external_credentials: bool = False,
+        startup_sleep: float = 4,
+    ) -> None:
+        self.email_client_type = email_client_type
+        self.email_client_user = build_email_client_user(
+            user,
+            email_client_type,
+            force_external_credentials=force_external_credentials,
+        )
+        self.setup_selenium(self.email_client_type, self.email_client_user, startup_sleep=startup_sleep)
+        self.email_client = self.selenium_controller.email_client

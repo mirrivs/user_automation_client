@@ -55,7 +55,7 @@ class UserAutomationManager:
         try:
             username = automation_config["general"]["user"]["internal_email"]
             password = automation_config["general"]["user"]["internal_password"]
-            if automation_config["general"]["enable_o365"]:
+            if automation_config["general"]["use_hybrid_mail_domain"]:
                 username = automation_config["general"]["user"]["external_email"]
                 password = automation_config["general"]["user"]["external_password"]
 

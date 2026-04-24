@@ -1,21 +1,18 @@
 import platform
 
 from app_config import automation_config
-from behaviour.behaviour import BaseBehaviour
+from behaviour.behaviour import WebEmailBehaviour
 from behaviour.config import get_behaviour_cfg
 from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from behaviour.models.config import WorkEmailsCfg
 from cleanup_manager import CleanupManager
-from lib.autogui.actions.browser import Edge
 from lib.email_manager.email_manager import EmailManager
-from lib.selenium.email_web_client import EmailClientUser
 from lib.selenium.models import EmailClient
-from lib.selenium.selenium_controller import getSeleniumController
 from src.logger import app_logger
 
 
-class BehaviourWorkEmails(BaseBehaviour):
+class BehaviourWorkEmails(WebEmailBehaviour):
     """
     Behaviour for generating or responding to predefined email conversations.
     """
@@ -41,39 +38,22 @@ class BehaviourWorkEmails(BaseBehaviour):
     def run_behaviour(self):
         app_logger.info("Starting work_emails behaviour")
 
-        browser = Edge()
-
         self.email_manager = EmailManager()
-        is_o365 = self.email_client_type == EmailClient.O365
-        email_client_user: EmailClientUser = {
-            "name": (self.user["external_email"] if is_o365 else self.user["internal_email"]).split(".")[0],
-            "email": self.user["external_email"] if is_o365 else self.user["internal_email"],
-            "password": self.user["external_password"] if is_o365 else self.user["internal_password"],
-        }
+        self.setup_web_email_behaviour(self.user, self.email_client_type)
 
-        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
+        self.pool.submit(self.browser.search_by_url, self.general_cfg["organization_mail_server_url"]).result()
 
-        email_client = self.selenium_controller.email_client
+        self.pool.submit(self.email_client.login).result()
 
-        self.cleanup_manager.selenium_controller = self.selenium_controller
-        self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
-
-        self.selenium_controller.maximize_driver_window()
-        self.pool.sleep(4)
-
-        self.pool.submit(browser.search_by_url, self.general_cfg["organization_mail_server_url"]).result()
-
-        self.pool.submit(email_client.login).result()
-
-        if email_client.type == EmailClient.ROUNDCUBE:
+        if self.email_client.type == EmailClient.ROUNDCUBE:
             self.pool.submit(self.selenium_controller.roundcube_set_language).result()
 
         # Wait for the web to fully load
         self.pool.sleep(6)
 
-        unread_emails = self.pool.submit(email_client.get_unread_emails).result()
+        unread_emails = self.pool.submit(self.email_client.get_unread_emails).result()
 
-        responded_count = self.pool.submit(email_client.reply_to_emails, unread_emails).result()
+        responded_count = self.pool.submit(self.email_client.reply_to_emails, unread_emails).result()
 
         if not responded_count and self.config.get("is_conversation_starter", False):
             email_receivers = self.config.get("email_receivers")
@@ -84,7 +64,11 @@ class BehaviourWorkEmails(BaseBehaviour):
                 return
 
             email = self.email_manager.get_email_starter()
-            self.pool.submit(email_client.send_email, email_receivers, email["subject"], email["email_body"]).result()
+            self.pool.submit(
+                self.email_client.send_email,
+                email_receivers,
+                email["subject"],
+                email["email_body"],
+            ).result()
 
         app_logger.info("Completed work_emails behaviour")
-

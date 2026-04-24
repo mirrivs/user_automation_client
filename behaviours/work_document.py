@@ -3,20 +3,17 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from app_config import automation_config
 from behaviour import get_image_path
-from behaviour.behaviour import BaseBehaviour
+from behaviour.behaviour import WebEmailBehaviour
 from behaviour.config import get_behaviour_cfg
 from behaviour.ids import BehaviourId
 from behaviour.models import BehaviourCategory
 from cleanup_manager import CleanupManager
 from lib.autogui.actions import os_utils
-from lib.autogui.actions.browser import Edge, Firefox
-from lib.selenium.email_web_client import EmailClientUser
 from lib.selenium.models import EmailClient
-from lib.selenium.selenium_controller import getSeleniumController
 from src.logger import app_logger
 
 
-class BehaviourWorkDocument(BaseBehaviour):
+class BehaviourWorkDocument(WebEmailBehaviour):
     """
     Behaviour for working with text document.
     NOTE: This behaviour is currently unfinished.
@@ -43,7 +40,7 @@ class BehaviourWorkDocument(BaseBehaviour):
     def run_behaviour(self):
         app_logger.info(f"Starting {self.id} behaviour")
 
-        if self.general_cfg["enable_o365"]:
+        if self.general_cfg["use_web_office_apps"]:
             self.web_behaviour()
         else:
             self.local_behaviour()
@@ -51,25 +48,9 @@ class BehaviourWorkDocument(BaseBehaviour):
         app_logger.info(f"Completed {self.id} behaviour")
 
     def web_behaviour(self):
-        browser = Firefox() if self.os_type == "Linux" else Edge()
+        self.setup_web_email_behaviour(self.user, self.email_client_type, force_external_credentials=True)
 
-        email_client_user: EmailClientUser = {
-            "name": self.user["external_email"].split(".")[0],
-            "email": self.user["external_email"],
-            "password": self.user["external_password"],
-        }
-
-        self.selenium_controller = getSeleniumController(self.email_client_type, email_client_user)
-
-        email_client = self.selenium_controller.email_client
-
-        self.cleanup_manager.selenium_controller = self.selenium_controller
-        self.cleanup_manager.add_cleanup_task(self.selenium_controller.quit_driver)
-
-        self.selenium_controller.maximize_driver_window()
-        self.pool.sleep(4)
-
-        self.pool.submit(browser.search_by_url, "https://word.cloud.microsoft/").result()
+        self.pool.submit(self.browser.search_by_url, "https://word.cloud.microsoft/").result()
 
         self.pool.sleep(3)
 
@@ -79,7 +60,7 @@ class BehaviourWorkDocument(BaseBehaviour):
 
         self.pool.sleep(3)
 
-        self.pool.submit(email_client.login).result()
+        self.pool.submit(self.email_client.login).result()
 
         self.pool.sleep(3)
 
@@ -104,4 +85,3 @@ class BehaviourWorkDocument(BaseBehaviour):
                 grayscale=True,
             ).result()
             app_logger.info("LibreOffice Writer opened successfully")
-
