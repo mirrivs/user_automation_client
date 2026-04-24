@@ -9,8 +9,9 @@ from cleanup_manager import CleanupManager, CleanupTask
 from lib.autogui.actions.browser import Browser, Edge, Firefox
 from lib.cancellable_futures import CancellableThreadPoolExecutor, OperationCancelled, _current_executor
 from lib.selenium.email_web_client import BaseEmailWebClient
-from lib.selenium.models import EmailClient, EmailClientUser, build_email_client_user
+from lib.selenium.models import EmailClient, EmailClientUser
 from lib.selenium.selenium_controller import SeleniumController, getSeleniumController
+from lib.selenium.user import build_email_client_user
 from src.logger import app_logger
 
 

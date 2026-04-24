@@ -10,5 +10,6 @@
     "ruff.lineLength": 120,
     "python.analysis.extraPaths": [
         "./lib/cancellable_futures"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "standard"
 }
